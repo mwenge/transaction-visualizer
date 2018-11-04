@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Orbitron">
+</head>
+<style>
+body {
+  font-family: 'Orbitron', fixed;
+  font-size: 18px;
+  margin: 0px;
+}
+canvas { position: absolute; }
+.label {z-index: 2; position: absolute; color: white;}
+#vis-layer {z-index: 1;}
+.bubble {z-index: 3; position: absolute; transform: scale(0.01); transition: transform 5s ease-in-out; color: lime; font-size: 50px;}
+</style>
+<canvas id="vis-layer" width="1920" height="1040"></canvas>
+<div class="label" id="clock-layer" width="150" height="400"></div>
+<script>
+var img = new Image();
+img.onload = function() {
+    initialize(this);
+};
+img.src = "Background.png"
+img.width = screen.width;
+img.height = screen.height;
+var visLayer = document.getElementById("vis-layer")
+visLayer.width = screen.width;
+visLayer.height = screen.height;
+
+var clock = document.getElementById("clock-layer");
+clock.style.top = (screen.height - 50) + 'px';
+clock.style.left = (screen.width - 250) + 'px';
+
+var colors = {}
+colors['Decline'] = { rgb: [255, 0, 0], hex: '#ff0000' };
+colors['Approve'] = { rgb: [124, 252, 0], hex: '#7cfc00' };
+
+var allPixels = [];
+
+function initialize(img) {
+    var canvas = document.getElementById('vis-layer');
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+
+    for (var i = 0; i < data.length; i += 4) {
+        data[i]     = 0;     // red
+        data[i + 1] = 0; // green
+        data[i + 2] = 0; // blue
+    }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+function fadePixels(data) {
+    for (var i = 0; i < allPixels.length; i++) {
+        var pixel = allPixels[i]
+        var zeroed = 0;
+        for (var j = pixel; j < pixel + 3; j++) {
+            if (data[j] > 0) {
+                data[j]--;
+            } else {
+                zeroed++;
+            }
+        }
+        if (zeroed == 3) {
+            allPixels.splice(i, 1);
+        }
+    }
+}
+
+function drawText(img, authTime, offset, hex) {
+
+    var canvas = document.getElementById('vis-layer');
+    var ctx = canvas.getContext('2d');
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+    fadePixels(data);
+    ctx.putImageData(imageData, 0, 0);
+
+    var x = offset % canvas.width;
+    var y = (offset / canvas.width) - 1;
+    ctx.font = '10px';
+    ctx.fillStyle = hex;
+    ctx.fillText("100", x, y);
+    
+    var pixels = []
+    var initialPixel = (offset * 4) - (canvas.width * 4 * 20);
+    for (var startPixel = initialPixel; startPixel < initialPixel + (canvas.width * 4 * 20); startPixel += (canvas.width * 4)) {
+        for (var i = startPixel; i < startPixel + (50 * 4); i += 4) {
+            pixels.push(i);
+        }
+    }
+    allPixels = allPixels.concat(pixels);
+   
+
+    document.getElementById('clock-layer').textContent = authTime;
+}
+
+function drawStar(img, authTime, offset, rgb) {
+
+    var canvas = document.getElementById('vis-layer');
+    var ctx = canvas.getContext('2d');
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+
+    var pixelAbove = (offset * 4) - (canvas.width * 4);
+    var pixelBelow = (offset * 4) + (canvas.width * 4);
+    var centrePixel = offset * 4;
+    var pixelLeft = (offset * 4) - 4;
+    var pixelRight = (offset * 4) + 4;
+    
+    var pixels = [pixelAbove, pixelBelow, pixelLeft, pixelRight, centrePixel]
+    for (var i = 0; i < pixels.length; i++) {
+        var pixel = pixels[i]
+        data[pixel]     = rgb[0];     // red
+        data[pixel + 1] = rgb[1]; // green
+        data[pixel + 2] = rgb[2]; // blue
+    }
+    allPixels = allPixels.concat(pixels);
+    
+    fadePixels(data);
+    ctx.putImageData(imageData, 0, 0);
+
+    document.getElementById('clock-layer').textContent = authTime;
+
+}
+
+
+class LogStreamSink {
+    /**
+     * @param {string} name
+     */
+    constructor(name) {
+        this.name = name;
+        this.counter = 0;
+        this.prevChunk = ''
+    }
+
+    /**
+     * Called when a chunk is written to the log.
+     */
+    write(chunk) {
+
+        this.counter += 1;
+        var chunkStart = 0
+        console.log(chunk.length)
+        for (var i = 0; i < chunk.length; i++) {
+            if (chunk[i] != 13) {
+                continue
+            }
+            var chunkToDecode = chunk.slice(chunkStart, i);
+            var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
+            inputString = this.prevChunk + inputString;
+            var stringArray = inputString.split(',');
+            var authTime = stringArray[1] + ' ' + stringArray[2];
+            var offset = parseInt(stringArray[0], 10);
+            var rgb = colors[stringArray[3]].rgb;
+            var hex = colors[stringArray[3]].hex;
+            window.setTimeout(drawText, 1000, img, authTime, offset, hex);
+            window.setTimeout(drawStar, 1000, img, authTime, offset, rgb);
+            chunkStart = i + 1;
+            this.prevChunk = '';
+            i++;
+        }
+        var chunkToDecode = chunk.slice(chunkStart);
+        var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
+        this.prevChunk = inputString;
+        console.log(inputString)
+        console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
+        // var string = new TextDecoder("utf-8").decode(chunk);
+        // console.log('Chunk %d of %s: %s', this.counter, this.name, string);
+
+    }
+
+    /**
+     * Called when the stream is closed.
+     */
+    close() {
+    }
+
+}
+
+function logReadableStream(name, rs) {
+    const [rs1, rs2] = rs.tee();
+
+    rs2.pipeTo(new WritableStream(new LogStreamSink(name))).catch(console.error);
+
+    return rs1;
+}
+
+
+// Fetch the original image
+fetch('http://127.0.0.1:8080/040.txt')
+// Retrieve its body as ReadableStream
+    .then(response => response.body)
+// Log each fetched Uint8Array chunk
+    .then(rs => logReadableStream('Fetch Response Stream', rs))
+
+</script>
