@@ -4,18 +4,19 @@
           href="https://fonts.googleapis.com/css?family=Orbitron">
 </head>
 <style>
-body {
-  font-family: 'Orbitron', fixed;
-  font-size: 18px;
-  margin: 0px;
-}
-canvas { position: absolute; }
-.label {z-index: 2; position: absolute; color: white;}
-#vis-layer {z-index: 1;}
-.bubble {z-index: 3; position: absolute; transform: scale(0.01); transition: transform 5s ease-in-out; color: lime; font-size: 50px;}
+  body {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    margin: 0px;
+  }
+  canvas { position: absolute; }
+  .label {z-index: 2; position: absolute; color: white;}
+  #vis-layer {z-index: 1;}
+  .bubble {z-index: 3; position: absolute; transform: scale(0.01); transition: transform 5s ease-in-out; color: lime; font-size: 50px;}
 </style>
 <canvas id="vis-layer" width="1920" height="1040"></canvas>
-<div class="label" id="clock-layer" width="150" height="400"></div>
+<div class="label" id="clock-layer" width="150" height="200"></div>
+
 <script>
 var img = new Image();
 img.onload = function() {
@@ -29,14 +30,48 @@ visLayer.width = screen.width;
 visLayer.height = screen.height;
 
 var clock = document.getElementById("clock-layer");
-clock.style.top = (screen.height - 50) + 'px';
-clock.style.left = (screen.width - 250) + 'px';
+//clock.style.top = (screen.height - 20) + 'px';
+//clock.style.left = (screen.width - 250) + 'px';
 
 var colors = {}
 colors['Decline'] = { rgb: [255, 0, 0], hex: '#ff0000' };
 colors['Approve'] = { rgb: [124, 252, 0], hex: '#7cfc00' };
 
 var allPixels = [];
+var min_offset = 1;
+var max_offset = 1500000;
+var min_pixel = 1;
+var max_pixel = screen.width * screen.height;
+
+function mapOffsetToPixel(offset) {
+    var ratio = parseFloat(offset - min_offset) / parseFloat(max_offset - min_offset);
+    var pixel = parseInt(ratio * (max_pixel - min_pixel) + min_pixel);
+    return pixel;
+}
+
+function addAgeLabel(age, offset) {
+    if (age % 10 != 0) {
+        return;
+    }
+    var div = document.getElementById(age);
+    if (div != null) {
+        return;
+    }
+
+    var div = document.createElement('div');
+    div.className = 'label';
+    div.id = age;
+    div.textContent = age + 'yrs';
+    
+    var canvas = document.getElementById('vis-layer');
+    var x = (canvas.width) - 50;
+    var y = (offset / canvas.width) - 1;
+    div.style.top = y + 'px';
+    div.style.left = x + 'px';
+    div.style.fontSize = '10px';
+    div.style.color = '#ecf0f1';
+    document.body.appendChild(div); 
+}
 
 function initialize(img) {
     var canvas = document.getElementById('vis-layer');
@@ -70,7 +105,7 @@ function fadePixels(data) {
     }
 }
 
-function drawText(img, authTime, offset, hex) {
+function drawText(img, authTime, offset, hex, amount) {
 
     var canvas = document.getElementById('vis-layer');
     var ctx = canvas.getContext('2d');
@@ -81,9 +116,9 @@ function drawText(img, authTime, offset, hex) {
 
     var x = offset % canvas.width;
     var y = (offset / canvas.width) - 1;
-    ctx.font = '10px';
+    ctx.font = '9px';
     ctx.fillStyle = hex;
-    ctx.fillText("100", x, y);
+    ctx.fillText(amount, x, y);
     
     var pixels = []
     var initialPixel = (offset * 4) - (canvas.width * 4 * 20);
@@ -145,7 +180,6 @@ class LogStreamSink {
 
         this.counter += 1;
         var chunkStart = 0
-        console.log(chunk.length)
         for (var i = 0; i < chunk.length; i++) {
             if (chunk[i] != 13) {
                 continue
@@ -153,13 +187,22 @@ class LogStreamSink {
             var chunkToDecode = chunk.slice(chunkStart, i);
             var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
             inputString = this.prevChunk + inputString;
+
             var stringArray = inputString.split(',');
             var authTime = stringArray[1] + ' ' + stringArray[2];
+
             var offset = parseInt(stringArray[0], 10);
+            offset = mapOffsetToPixel(offset);
+
             var rgb = colors[stringArray[3]].rgb;
             var hex = colors[stringArray[3]].hex;
-            window.setTimeout(drawText, 1000, img, authTime, offset, hex);
-            window.setTimeout(drawStar, 1000, img, authTime, offset, rgb);
+            var amount = stringArray[4]
+            var age = stringArray[5]
+
+            window.setTimeout(addAgeLabel, 1000, age, offset);
+            window.setTimeout(drawText, 1000, img, authTime, offset, hex, amount);
+            // window.setTimeout(drawStar, 1000, img, authTime, offset, rgb);
+
             chunkStart = i + 1;
             this.prevChunk = '';
             i++;
@@ -167,8 +210,7 @@ class LogStreamSink {
         var chunkToDecode = chunk.slice(chunkStart);
         var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
         this.prevChunk = inputString;
-        console.log(inputString)
-        console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
+        // console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
         // var string = new TextDecoder("utf-8").decode(chunk);
         // console.log('Chunk %d of %s: %s', this.counter, this.name, string);
 
@@ -192,7 +234,7 @@ function logReadableStream(name, rs) {
 
 
 // Fetch the original image
-fetch('http://127.0.0.1:8080/040.txt')
+fetch('http://127.0.0.1:8080/900-DoB.txt')
 // Retrieve its body as ReadableStream
     .then(response => response.body)
 // Log each fetched Uint8Array chunk
