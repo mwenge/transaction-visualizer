@@ -12,32 +12,16 @@
   canvas { position: absolute; }
   .label {z-index: 2; position: absolute; color: white;}
   #vis-layer {z-index: 1;}
-  .bubble {z-index: 3; position: absolute; transform: scale(0.01); transition: transform 5s ease-in-out; color: lime; font-size: 50px;}
 </style>
-<canvas id="vis-layer" width="1920" height="1040"></canvas>
 <div class="label" id="clock-layer" width="150" height="200"></div>
-
 <script>
-var img = new Image();
-img.onload = function() {
-    initialize(this);
-};
-img.src = "Background.png"
-img.width = screen.width;
-img.height = screen.height;
-var visLayer = document.getElementById("vis-layer")
-visLayer.width = screen.width;
-visLayer.height = screen.height;
-
-var clock = document.getElementById("clock-layer");
-//clock.style.top = (screen.height - 20) + 'px';
-//clock.style.left = (screen.width - 250) + 'px';
-
 var colors = {}
 colors['Decline'] = { rgb: [255, 0, 0], hex: '#ff0000' };
 colors['Approve'] = { rgb: [124, 252, 0], hex: '#7cfc00' };
 
 var allPixels = [];
+var allAmounts = [];
+
 var min_offset = 1;
 var max_offset = 1500000;
 var min_pixel = 1;
@@ -49,7 +33,54 @@ function mapOffsetToPixel(offset) {
     return pixel;
 }
 
-function addAgeLabel(age, offset) {
+function mapSourceToTarget(source, max_target, min_target, max_source, min_source) {
+    var ratio = parseFloat(source - min_source) / parseFloat(max_source - min_source);
+    var target = parseInt(ratio * (max_target - min_target) + min_target);
+    return target;
+}
+
+var maxMinLatLong = {};
+maxMinLatLong['IE'] = { max_latitude: 55.25, max_longitude: -5.44304, min_latitude: 51.52487, min_longitude: -10.26889}
+maxMinLatLong['GB'] = { max_latitude: 60.39635, max_longitude: 1.75167, min_latitude: 49.91447, min_longitude: -7.45731}
+
+function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
+    var coordinates = maxMinLatLong[country];
+    var margin = 1;
+    var maxX = canvas.width - (margin * 2);
+    var minX = margin;
+    var maxY = canvas.height - (margin * 2);
+    var minY = margin;
+    
+    var x = mapSourceToTarget(longitude, maxX, minX, coordinates.max_longitude, coordinates.min_longitude);
+    var y = mapSourceToTarget(latitude, maxY, minY, coordinates.max_latitude, coordinates.min_latitude);
+    y = maxY - y;
+    var offset = canvas.width * (margin + y - 1);
+    offset += x;
+    return offset;
+}
+
+function addTownLabel(town, offset, canvas) {
+    var div = document.getElementById(town);
+    if (div != null) {
+        return;
+    }
+
+    var div = document.createElement('div');
+    div.className = 'label';
+    div.id = town;
+    div.textContent = town;
+    
+    var x = offset % canvas.width;
+    //x += canvas.style.left;
+    var y = (offset / canvas.width) - 1;
+    div.style.top = y + 'px';
+    div.style.left = x + 'px';
+    div.style.fontSize = '10px';
+    div.style.color = '#ecf0f1';
+    document.body.appendChild(div); 
+}
+
+function addAgeLabel(age, offset, canvas) {
     if (age % 10 != 0) {
         return;
     }
@@ -63,7 +94,6 @@ function addAgeLabel(age, offset) {
     div.id = age;
     div.textContent = age + 'yrs';
     
-    var canvas = document.getElementById('vis-layer');
     var x = (canvas.width) - 50;
     var y = (offset / canvas.width) - 1;
     div.style.top = y + 'px';
@@ -73,8 +103,8 @@ function addAgeLabel(age, offset) {
     document.body.appendChild(div); 
 }
 
-function initialize(img) {
-    var canvas = document.getElementById('vis-layer');
+function initialize(img, layerID) {
+    var canvas = document.getElementById(layerID);
     var ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
     var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -105,37 +135,48 @@ function fadePixels(data) {
     }
 }
 
-function drawText(img, authTime, offset, hex, amount) {
+function fadeAmounts(ctx, canvas) {
 
-    var canvas = document.getElementById('vis-layer');
+    for (var i = 0; i < allAmounts.length; i++) {
+        var pixel = allAmounts[i]
+        if (pixel.countdown > 0) {
+            pixel.countdown--;
+            continue;
+        }
+
+        for (var j = 0; j < 2; j++) {
+          pixel.rgb[j] = Math.max(0, pixel.rgb[j] - 0.1); 
+        }
+        var newColor = 'rgb(' + pixel.rgb[0] + ',' + pixel.rgb[1] + ',' + pixel.rgb[2] + ')'; 
+
+        ctx.font = '9px';
+        ctx.fillStyle = newColor;
+        ctx.fillText(pixel.amount, pixel.x, pixel.y);
+    }
+    if (allAmounts.length > 550) {
+      allAmounts.shift();
+    }
+}
+function drawText(authTime, offset, hex, rgb, amount, canvas) {
+
     var ctx = canvas.getContext('2d');
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var data = imageData.data;
-    fadePixels(data);
-    ctx.putImageData(imageData, 0, 0);
+
+    fadeAmounts(ctx, canvas);
 
     var x = offset % canvas.width;
     var y = (offset / canvas.width) - 1;
     ctx.font = '9px';
     ctx.fillStyle = hex;
-    ctx.fillText(amount, x, y);
+    ctx.fillText(amount, x, y, 100);
     
-    var pixels = []
-    var initialPixel = (offset * 4) - (canvas.width * 4 * 20);
-    for (var startPixel = initialPixel; startPixel < initialPixel + (canvas.width * 4 * 20); startPixel += (canvas.width * 4)) {
-        for (var i = startPixel; i < startPixel + (50 * 4); i += 4) {
-            pixels.push(i);
-        }
-    }
-    allPixels = allPixels.concat(pixels);
-   
+    var amountDetail = {amount: amount, rgb: rgb, x: x, y: y, countdown: 100};
+    allAmounts.push(amountDetail);
 
     document.getElementById('clock-layer').textContent = authTime;
 }
 
-function drawStar(img, authTime, offset, rgb) {
+function drawStar(authTime, offset, rgb, canvas) {
 
-    var canvas = document.getElementById('vis-layer');
     var ctx = canvas.getContext('2d');
     var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     var data = imageData.data;
@@ -149,7 +190,7 @@ function drawStar(img, authTime, offset, rgb) {
     var pixels = [pixelAbove, pixelBelow, pixelLeft, pixelRight, centrePixel]
     for (var i = 0; i < pixels.length; i++) {
         var pixel = pixels[i]
-        data[pixel]     = rgb[0];     // red
+        data[pixel]     = rgb[0]; // red
         data[pixel + 1] = rgb[1]; // green
         data[pixel + 2] = rgb[2]; // blue
     }
@@ -163,7 +204,68 @@ function drawStar(img, authTime, offset, rgb) {
 }
 
 
-class LogStreamSink {
+class ProcessAgeMap {
+    /**
+     * @param {string} name
+     */
+    constructor(name) {
+        this.name = name;
+        this.counter = 0;
+        this.prevChunk = ''
+    }
+
+    /**
+     * Called when a chunk is written to the log.
+     */
+    write(chunk) {
+
+        var canvas = document.getElementById("age-layer");
+        this.counter += 1;
+        var chunkStart = 0
+        for (var i = 0; i < chunk.length; i++) {
+            if (chunk[i] != 13) {
+                continue
+            }
+            var chunkToDecode = chunk.slice(chunkStart, i);
+            var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
+            inputString = this.prevChunk + inputString;
+
+            var stringArray = inputString.split(',');
+            var authTime = stringArray[1] + ' ' + stringArray[2];
+
+            var offset = parseInt(stringArray[0], 10);
+            offset = mapOffsetToPixel(offset);
+
+            var rgb = colors[stringArray[3]].rgb;
+            var hex = colors[stringArray[3]].hex;
+            var amount = stringArray[4]
+            var age = stringArray[5]
+
+            //window.setTimeout(addAgeLabel, 1000, age, offset, canvas);
+            // window.setTimeout(drawText, 1000, authTime, offset, hex, rgb, amount, canvas);
+            window.setTimeout(drawStar, 1000, authTime, offset, rgb, canvas);
+
+            chunkStart = i + 1;
+            this.prevChunk = '';
+            i++;
+        }
+        var chunkToDecode = chunk.slice(chunkStart);
+        var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
+        this.prevChunk = inputString;
+        // console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
+        // var string = new TextDecoder("utf-8").decode(chunk);
+        // console.log('Chunk %d of %s: %s', this.counter, this.name, string);
+
+    }
+
+    /**
+     * Called when the stream is closed.
+     */
+    close() {
+    }
+}
+
+class ProcessMap {
     /**
      * @param {string} name
      */
@@ -189,19 +291,29 @@ class LogStreamSink {
             inputString = this.prevChunk + inputString;
 
             var stringArray = inputString.split(',');
+            var country = stringArray[9];
+            var canvasID = country + '-layer';
+            var canvas = document.getElementById(canvasID);
+            if (canvas == null) {
+                chunkStart = i + 1;
+                this.prevChunk = '';
+                i++;
+                continue;
+            }
             var authTime = stringArray[1] + ' ' + stringArray[2];
-
-            var offset = parseInt(stringArray[0], 10);
-            offset = mapOffsetToPixel(offset);
 
             var rgb = colors[stringArray[3]].rgb;
             var hex = colors[stringArray[3]].hex;
-            var amount = stringArray[4]
-            var age = stringArray[5]
+            var amount = stringArray[4];
+            var age = stringArray[5];
+            var town = stringArray[6];
+            var latitude = stringArray[7];
+            var longitude = stringArray[8];
+            var offset = parseInt(mapCoordinatesToOffset(latitude, longitude, canvas, country), 10);
 
-            window.setTimeout(addAgeLabel, 1000, age, offset);
-            window.setTimeout(drawText, 1000, img, authTime, offset, hex, amount);
-            // window.setTimeout(drawStar, 1000, img, authTime, offset, rgb);
+            //window.setTimeout(addTownLabel, 1000, town, offset, canvas);
+            window.setTimeout(drawText, 1000, authTime, offset, hex, rgb, amount, canvas);
+            //window.setTimeout(drawStar, 1000, authTime, offset, rgb, canvas);
 
             chunkStart = i + 1;
             this.prevChunk = '';
@@ -210,34 +322,84 @@ class LogStreamSink {
         var chunkToDecode = chunk.slice(chunkStart);
         var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
         this.prevChunk = inputString;
-        // console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
-        // var string = new TextDecoder("utf-8").decode(chunk);
-        // console.log('Chunk %d of %s: %s', this.counter, this.name, string);
-
     }
-
     /**
      * Called when the stream is closed.
      */
     close() {
     }
-
 }
-
-function logReadableStream(name, rs) {
+function processTransactionData(name, rs) {
     const [rs1, rs2] = rs.tee();
 
-    rs2.pipeTo(new WritableStream(new LogStreamSink(name))).catch(console.error);
+    if (name == 'Age Map') { 
+      rs2.pipeTo(new WritableStream(new ProcessAgeMap(name))).catch(console.error);
+    } else if (name == 'Geo Map') {
+      rs2.pipeTo(new WritableStream(new ProcessMap(name))).catch(console.error);
+    }
 
     return rs1;
 }
 
 
-// Fetch the original image
-fetch('http://127.0.0.1:8080/900-DoB.txt')
-// Retrieve its body as ReadableStream
-    .then(response => response.body)
-// Log each fetched Uint8Array chunk
-    .then(rs => logReadableStream('Fetch Response Stream', rs))
+function runAgeMap() {
+  var canvasElement = document.createElement("canvas");
+  canvasElement.id = "age-layer";
+  canvasElement.width = screen.width;
+  canvasElement.height = screen.height;
+  var img = new Image();
+  img.onload = function() {
+      initialize(this, "age-layer");
+  };
+  img.src = "Background.png"
+  img.width = screen.width;
+  img.height = screen.height;
+  document.body.appendChild(canvasElement);
+
+  // Fetch the original image
+  fetch('http://127.0.0.1:8080/900-DoB.txt')
+  // Retrieve its body as ReadableStream
+      .then(response => response.body)
+  // Log each fetched Uint8Array chunk
+      .then(rs => processTransactionData('Age Map', rs))
+}
+
+function runGeoMap() {
+  var canvasElement = document.createElement("canvas");
+  canvasElement.id = "IE-layer";
+  canvasElement.width = screen.width / 3;
+  canvasElement.height = screen.height;
+  var img = new Image();
+  img.onload = function() {
+      initialize(this, "IE-layer");
+  };
+  img.src = "Background.png"
+  img.width = screen.width / 3;
+  img.height = screen.height;
+  document.body.appendChild(canvasElement);
+
+  canvasElement = document.createElement("canvas");
+  canvasElement.id = "GB-layer";
+  canvasElement.width = screen.width / 3;
+  canvasElement.height = screen.height;
+  canvasElement.style.left = (screen.width / 3) + 'px'; 
+  var img = new Image();
+  img.onload = function() {
+      initialize(this, "GB-layer");
+  };
+  img.src = "Background2.png"
+  img.width = screen.width / 3;
+  img.height = screen.height;
+  document.body.appendChild(canvasElement);
+
+  // Fetch the original image
+  fetch('http://127.0.0.1:8080/900-Geo.txt')
+  // Retrieve its body as ReadableStream
+      .then(response => response.body)
+  // Log each fetched Uint8Array chunk
+      .then(rs => processTransactionData('Geo Map', rs))
+}
+
+runGeoMap();
 
 </script>
