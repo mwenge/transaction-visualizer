@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Orbitron">
+</head>
+<style>
+  body {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    margin: 0px;
+    overflow: hidden;
+  }
+  canvas { position: absolute; }
+  .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
+  .label {z-index: 2; position: absolute; color: white;}
+  .town {
+    animation-duration: 25s;
+    animation-name: fadeout;
+  }
+  .animation {
+    z-index: 3;
+    position: absolute; 
+    animation-duration: 15s;
+    animation-name: fadeout;
+    text-shadow:
+      0 0 1px #fff,
+      0 0 3px #0ff;
+  }
+  @keyframes fadeout {from{} to{color: #000000;}}
+  .clock { top: 5px; left: 5px; }
+  /*
+  .neon {
+    text-shadow:
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px #fff,
+      0 0 40px #0ff,
+      0 0 80px #0ff,
+      0 0 90px #0ff,
+      0 0 100px #0ff,
+      0 0 150px #0ff;
+  }
+  */
+</style>
+<div></div>
+<script src="geodata.js"></script>
+<script>
+
+var min_pixel = 1;
+var max_pixel = screen.width * screen.height;
+
+function mapSourceToTarget(source, max_target, min_target, max_source, min_source) {
+    var ratio = parseFloat(source - min_source) / parseFloat(max_source - min_source);
+    var target = parseInt(ratio * (max_target - min_target) + min_target);
+    return target;
+}
+
+var maxMinLatLong = {};
+maxMinLatLong['IE'] = { max_latitude: 55.25, max_longitude: -5.44304, min_latitude: 51.52487, min_longitude: -10.26889}
+maxMinLatLong['All'] = { max_latitude: 78.22334, max_longitude: 179.36451, min_latitude: -77.846, min_longitude: -179.12198}
+maxMinLatLong['Europe'] = { max_latitude: 71.04137, max_longitude: 64.41667, min_latitude: 34.8346, min_longitude: -10.26889}
+
+function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
+    var coordinates = maxMinLatLong[country];
+    var margin = 20;
+    var maxX = canvas.width - (margin * 2);
+    var minX = margin;
+    var maxY = canvas.height - (margin * 2);
+    var minY = margin;
+    
+    var x = mapSourceToTarget(longitude, maxX, minX, coordinates.max_longitude, coordinates.min_longitude);
+    var y = mapSourceToTarget(latitude, maxY, minY, coordinates.max_latitude, coordinates.min_latitude);
+    y = maxY - y;
+    return {x:x, y:y}
+}
+
+
+var country  = {
+  code: "All",
+  left: 0,
+  top: 0,
+  width: screen.width,
+  height: screen.height,
+};
+
+var container = document.createElement("div");
+container.className = 'container';
+container.id = country.code + "-container";
+container.style.left = country.left + 'px'; 
+container.style.top = country.top + 'px'; 
+container.style.width = country.width + 'px';
+container.style.height = country.height + 'px';
+container.style.backgroundColor = 'black';
+document.body.appendChild(container);
+
+var canvasElement = document.createElement("canvas");
+canvasElement.id = country.code + "-layer";
+canvasElement.width = country.width;
+canvasElement.height = country.height;
+container.appendChild(canvasElement);
+
+for (const [code, coasts] of Object.entries(coastline)) {
+  for (var h = 0; h < coasts.length; h++) {
+    var ctx = canvasElement.getContext('2d');
+    ctx.strokeStyle = 'white';
+    ctx.beginPath();
+
+    var coast = coasts[h];
+    var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, "All"); 
+    var prevOffset = offset;
+    ctx.moveTo(offset.x, offset.y);
+
+    for (var i = 2; i < coast.length; i+=2) {
+        offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, "All"); 
+        ctx.lineTo(offset.x, offset.y);
+        prevOffset = offset;
+    }
+    ctx.stroke();
+  }
+}
+</script>

@@ -8,19 +8,47 @@
     font-family: 'Orbitron', monospace;
     font-size: 18px;
     margin: 0px;
+    overflow: hidden;
   }
   canvas { position: absolute; }
+  .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
   .label {z-index: 2; position: absolute; color: white;}
-  #vis-layer {z-index: 1;}
+  .town {
+    animation-duration: 25s;
+    animation-name: fadeout;
+  }
+  .animation {
+    z-index: 3;
+    position: absolute; 
+    animation-duration: 15s;
+    animation-name: fadeout;
+    text-shadow:
+      0 0 1px #fff,
+      0 0 3px #0ff;
+  }
+  @keyframes fadeout {from{} to{color: #000000;}}
+  .clock { top: 5px; left: 5px; }
+  /*
+  .neon {
+    text-shadow:
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px #fff,
+      0 0 40px #0ff,
+      0 0 80px #0ff,
+      0 0 90px #0ff,
+      0 0 100px #0ff,
+      0 0 150px #0ff;
+  }
+  */
 </style>
-<div class="label" id="clock-layer" width="150" height="200"></div>
+<div class="label clock" id="clock-layer" width="150" height="200"></div>
 <script>
 var colors = {}
-colors['Decline'] = { rgb: [255, 0, 0], hex: '#ff0000' };
-colors['Approve'] = { rgb: [124, 252, 0], hex: '#7cfc00' };
+colors['Decline'] = { hex: '#ff0000'};
+colors['Approve'] = { hex: '#7cfc00'};
 
-var allPixels = [];
-var allAmounts = [];
+var events = [];
 
 var min_offset = 1;
 var max_offset = 1500000;
@@ -41,11 +69,14 @@ function mapSourceToTarget(source, max_target, min_target, max_source, min_sourc
 
 var maxMinLatLong = {};
 maxMinLatLong['IE'] = { max_latitude: 55.25, max_longitude: -5.44304, min_latitude: 51.52487, min_longitude: -10.26889}
-maxMinLatLong['GB'] = { max_latitude: 60.39635, max_longitude: 1.75167, min_latitude: 49.91447, min_longitude: -7.45731}
+maxMinLatLong['GB'] = { max_latitude: 58.51277, max_longitude: 1.75167, min_latitude: 50.1861, min_longitude: -7.45731}
+maxMinLatLong['DE'] = { max_latitude: 55.01917, max_longitude: 14.98853, min_latitude: 47.40724, min_longitude: 5.92978}
+maxMinLatLong['ES'] = { max_latitude: 43.74134, max_longitude: 4.2899, min_latitude: 36.51543, min_longitude: -8.54569}
+maxMinLatLong['FR'] = { max_latitude: 51.07786, max_longitude: 9.52242, min_latitude: 41.3874, min_longitude: -5.08615}
 
 function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var coordinates = maxMinLatLong[country];
-    var margin = 1;
+    var margin = 20;
     var maxX = canvas.width - (margin * 2);
     var minX = margin;
     var maxY = canvas.height - (margin * 2);
@@ -59,48 +90,20 @@ function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     return offset;
 }
 
-function addTownLabel(town, offset, canvas) {
+function addTownLabel(town, x, y, canvas) {
     var div = document.getElementById(town);
-    if (div != null) {
-        return;
-    }
 
     var div = document.createElement('div');
-    div.className = 'label';
+    div.className = 'label town';
     div.id = town;
     div.textContent = town;
     
-    var x = offset % canvas.width;
-    //x += canvas.style.left;
-    var y = (offset / canvas.width) - 1;
     div.style.top = y + 'px';
     div.style.left = x + 'px';
-    div.style.fontSize = '10px';
+    div.style.fontSize = '8px';
     div.style.color = '#ecf0f1';
-    document.body.appendChild(div); 
-}
-
-function addAgeLabel(age, offset, canvas) {
-    if (age % 10 != 0) {
-        return;
-    }
-    var div = document.getElementById(age);
-    if (div != null) {
-        return;
-    }
-
-    var div = document.createElement('div');
-    div.className = 'label';
-    div.id = age;
-    div.textContent = age + 'yrs';
-    
-    var x = (canvas.width) - 50;
-    var y = (offset / canvas.width) - 1;
-    div.style.top = y + 'px';
-    div.style.left = x + 'px';
-    div.style.fontSize = '10px';
-    div.style.color = '#ecf0f1';
-    document.body.appendChild(div); 
+    canvas.parentNode.appendChild(div); 
+    div.addEventListener("animationend", removeElement);
 }
 
 function initialize(img, layerID) {
@@ -118,151 +121,47 @@ function initialize(img, layerID) {
     ctx.putImageData(imageData, 0, 0);
 }
 
-function fadePixels(data) {
-    for (var i = 0; i < allPixels.length; i++) {
-        var pixel = allPixels[i]
-        var zeroed = 0;
-        for (var j = pixel; j < pixel + 3; j++) {
-            if (data[j] > 0) {
-                data[j]--;
-            } else {
-                zeroed++;
-            }
-        }
-        if (zeroed == 3) {
-            allPixels.splice(i, 1);
-        }
+function removeElement(evt) {
+    var element = evt.target;
+    if (element.parentNode) {
+      element.parentNode.removeChild(element);
     }
 }
 
-function fadeAmounts(ctx, canvas) {
-
-    for (var i = 0; i < allAmounts.length; i++) {
-        var pixel = allAmounts[i]
-        if (pixel.countdown > 0) {
-            pixel.countdown--;
-            continue;
-        }
-
-        for (var j = 0; j < 2; j++) {
-          pixel.rgb[j] = Math.max(0, pixel.rgb[j] - 0.1); 
-        }
-        var newColor = 'rgb(' + pixel.rgb[0] + ',' + pixel.rgb[1] + ',' + pixel.rgb[2] + ')'; 
-
-        ctx.font = '9px';
-        ctx.fillStyle = newColor;
-        ctx.fillText(pixel.amount, pixel.x, pixel.y);
+function fadeElement(evt) {
+    var element = evt.target;
+    if (element.parentNode) {
+        element.className = 'animation';
     }
-    if (allAmounts.length > 550) {
-      allAmounts.shift();
-    }
+    element.addEventListener("animationend", removeElement);
 }
-function drawText(authTime, offset, hex, rgb, amount, canvas) {
 
-    var ctx = canvas.getContext('2d');
+function drawEvent() {
 
-    fadeAmounts(ctx, canvas);
+    if (events.length < 1) {
+        return;
+    }
 
-    var x = offset % canvas.width;
-    var y = (offset / canvas.width) - 1;
-    ctx.font = '9px';
-    ctx.fillStyle = hex;
-    ctx.fillText(amount, x, y, 100);
+    var evt = events.shift();
+
+    var animation = document.createElement("div");
+    animation.className = 'animation animation' + evt.country;
+    animation.id = evt.offset + evt.amount;
+    animation.addEventListener("animationend", fadeElement);
+
+    animation.style.fontSize = '9px';
+    animation.style.color = evt.hex;
+    animation.textContent = evt.amount;
+
+    var x = evt.offset % evt.canvas.width;
+    var y = (evt.offset / evt.canvas.width) - 1;
+    animation.style.top = y + 'px';
+    animation.style.left = x + 'px';
     
-    var amountDetail = {amount: amount, rgb: rgb, x: x, y: y, countdown: 100};
-    allAmounts.push(amountDetail);
+    evt.canvas.parentNode.appendChild(animation);
 
-    document.getElementById('clock-layer').textContent = authTime;
-}
-
-function drawStar(authTime, offset, rgb, canvas) {
-
-    var ctx = canvas.getContext('2d');
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var data = imageData.data;
-
-    var pixelAbove = (offset * 4) - (canvas.width * 4);
-    var pixelBelow = (offset * 4) + (canvas.width * 4);
-    var centrePixel = offset * 4;
-    var pixelLeft = (offset * 4) - 4;
-    var pixelRight = (offset * 4) + 4;
-    
-    var pixels = [pixelAbove, pixelBelow, pixelLeft, pixelRight, centrePixel]
-    for (var i = 0; i < pixels.length; i++) {
-        var pixel = pixels[i]
-        data[pixel]     = rgb[0]; // red
-        data[pixel + 1] = rgb[1]; // green
-        data[pixel + 2] = rgb[2]; // blue
-    }
-    allPixels = allPixels.concat(pixels);
-    
-    fadePixels(data);
-    ctx.putImageData(imageData, 0, 0);
-
-    document.getElementById('clock-layer').textContent = authTime;
-
-}
-
-
-class ProcessAgeMap {
-    /**
-     * @param {string} name
-     */
-    constructor(name) {
-        this.name = name;
-        this.counter = 0;
-        this.prevChunk = ''
-    }
-
-    /**
-     * Called when a chunk is written to the log.
-     */
-    write(chunk) {
-
-        var canvas = document.getElementById("age-layer");
-        this.counter += 1;
-        var chunkStart = 0
-        for (var i = 0; i < chunk.length; i++) {
-            if (chunk[i] != 13) {
-                continue
-            }
-            var chunkToDecode = chunk.slice(chunkStart, i);
-            var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
-            inputString = this.prevChunk + inputString;
-
-            var stringArray = inputString.split(',');
-            var authTime = stringArray[1] + ' ' + stringArray[2];
-
-            var offset = parseInt(stringArray[0], 10);
-            offset = mapOffsetToPixel(offset);
-
-            var rgb = colors[stringArray[3]].rgb;
-            var hex = colors[stringArray[3]].hex;
-            var amount = stringArray[4]
-            var age = stringArray[5]
-
-            //window.setTimeout(addAgeLabel, 1000, age, offset, canvas);
-            // window.setTimeout(drawText, 1000, authTime, offset, hex, rgb, amount, canvas);
-            window.setTimeout(drawStar, 1000, authTime, offset, rgb, canvas);
-
-            chunkStart = i + 1;
-            this.prevChunk = '';
-            i++;
-        }
-        var chunkToDecode = chunk.slice(chunkStart);
-        var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
-        this.prevChunk = inputString;
-        // console.log('Chunk %d of %s: %o', this.counter, this.name, chunk);
-        // var string = new TextDecoder("utf-8").decode(chunk);
-        // console.log('Chunk %d of %s: %s', this.counter, this.name, string);
-
-    }
-
-    /**
-     * Called when the stream is closed.
-     */
-    close() {
-    }
+    addTownLabel(evt.town, x, y - 10, evt.canvas);
+    document.getElementById('clock-layer').textContent = evt.authTime;
 }
 
 class ProcessMap {
@@ -302,7 +201,6 @@ class ProcessMap {
             }
             var authTime = stringArray[1] + ' ' + stringArray[2];
 
-            var rgb = colors[stringArray[3]].rgb;
             var hex = colors[stringArray[3]].hex;
             var amount = stringArray[4];
             var age = stringArray[5];
@@ -311,9 +209,15 @@ class ProcessMap {
             var longitude = stringArray[8];
             var offset = parseInt(mapCoordinatesToOffset(latitude, longitude, canvas, country), 10);
 
-            //window.setTimeout(addTownLabel, 1000, town, offset, canvas);
-            window.setTimeout(drawText, 1000, authTime, offset, hex, rgb, amount, canvas);
-            //window.setTimeout(drawStar, 1000, authTime, offset, rgb, canvas);
+            events.push( { authTime: authTime,
+                          amount: amount,
+                          town: town,
+                          latitude: latitude,
+                          longitude: longitude,
+                          offset: offset,
+                          canvas: canvas,
+                          country: country,
+                          hex: hex } );
 
             chunkStart = i + 1;
             this.prevChunk = '';
@@ -331,66 +235,110 @@ class ProcessMap {
 }
 function processTransactionData(name, rs) {
     const [rs1, rs2] = rs.tee();
-
-    if (name == 'Age Map') { 
-      rs2.pipeTo(new WritableStream(new ProcessAgeMap(name))).catch(console.error);
-    } else if (name == 'Geo Map') {
-      rs2.pipeTo(new WritableStream(new ProcessMap(name))).catch(console.error);
-    }
-
+    rs2.pipeTo(new WritableStream(new ProcessMap(name))).catch(console.error);
     return rs1;
 }
 
-
-function runAgeMap() {
+function addCountry(country) {
+  var container = document.createElement("div");
+  container.className = 'container';
+  container.id = country.code + "-container";
+  container.style.left = country.left + 'px'; 
+  container.style.top = country.top + 'px'; 
+  container.style.width = country.width + 'px';
+  container.style.height = country.height + 'px';
+  document.body.appendChild(container);
+  
   var canvasElement = document.createElement("canvas");
-  canvasElement.id = "age-layer";
-  canvasElement.width = screen.width;
-  canvasElement.height = screen.height;
+  canvasElement.id = country.code + "-layer";
+  canvasElement.width = country.width;
+  canvasElement.height = country.height;
   var img = new Image();
   img.onload = function() {
-      initialize(this, "age-layer");
+      initialize(this, country.code + "-layer");
   };
   img.src = "Background.png"
-  img.width = screen.width;
-  img.height = screen.height;
-  document.body.appendChild(canvasElement);
+  img.width = country.width;
+  img.height = country.height;
+  container.appendChild(canvasElement);
 
-  // Fetch the original image
-  fetch('http://127.0.0.1:8080/900-DoB.txt')
-  // Retrieve its body as ReadableStream
-      .then(response => response.body)
-  // Log each fetched Uint8Array chunk
-      .then(rs => processTransactionData('Age Map', rs))
+  var div = document.createElement('div');
+  div.className = 'label';
+  div.textContent = country.code;
+
+  div.style.bottom = '185px';
+  div.style.right = '180px';
+  div.style.fontSize = '60px';
+  div.style.color = 'gray';
+  container.appendChild(div); 
+
+  var animationStartX = (screen.width / 2) - country.left;
+  var animationStartY = (screen.height / 2) - country.top;
+  var style = document.createElement('style');
+  var css =
+    ".animation" + country.code + " {" +
+      "animation-duration: 3s;\n" +
+      "animation-name: slidein" + country.code + ";" +
+    "}\n" +
+    "@keyframes slidein" + country.code + " {" +
+      "from {" +
+        "position:absolute;" + 
+        "top: " + animationStartY + "px;" +
+        "left: " + animationStartX + "px;" +
+        "font-size: 50px;" +
+      "}" +
+      "to {" +
+      "}" +
+    "}";
+
+  style.innerHTML = css;
+  document.head.appendChild(style);
 }
 
 function runGeoMap() {
-  var canvasElement = document.createElement("canvas");
-  canvasElement.id = "IE-layer";
-  canvasElement.width = screen.width / 3;
-  canvasElement.height = screen.height;
-  var img = new Image();
-  img.onload = function() {
-      initialize(this, "IE-layer");
-  };
-  img.src = "Background.png"
-  img.width = screen.width / 3;
-  img.height = screen.height;
-  document.body.appendChild(canvasElement);
+  var countriesToAdd = [
+    { 
+      code: "IE",
+      width: screen.width / 3,
+      height: screen.height - 2,
+      top: 0,
+      left: 0
+    },
+    { 
+      code: "GB",
+      width: screen.width / 3,
+      height: (screen.height / 2) - 2,
+      top: 0,
+      left: 1 + (screen.width / 3)
+    },
+    { 
+      code: "FR",
+      width: screen.width / 3,
+      height: (screen.height / 2) - 2,
+      top: (screen.height / 2),
+      left: 1 + (screen.width / 3)
+    },
+    { 
+      code: "DE",
+      width: screen.width / 3,
+      height: (screen.height / 2) - 2,
+      top: 0,
+      left: ((screen.width / 3) * 2) - 2
+    },
+    { 
+      code: "ES",
+      width: screen.width / 3,
+      height: (screen.height / 2) - 2,
+      top: (screen.height / 2),
+      left: ((screen.width / 3) * 2) - 2
+    }
+  ];
 
-  canvasElement = document.createElement("canvas");
-  canvasElement.id = "GB-layer";
-  canvasElement.width = screen.width / 3;
-  canvasElement.height = screen.height;
-  canvasElement.style.left = (screen.width / 3) + 'px'; 
-  var img = new Image();
-  img.onload = function() {
-      initialize(this, "GB-layer");
-  };
-  img.src = "Background2.png"
-  img.width = screen.width / 3;
-  img.height = screen.height;
-  document.body.appendChild(canvasElement);
+  for (var i = 0; i < countriesToAdd.length; i++) {
+      addCountry(countriesToAdd[i]);
+  }
+
+  window.setInterval(drawEvent, 100);
 
   // Fetch the original image
   fetch('http://127.0.0.1:8080/900-Geo.txt')
