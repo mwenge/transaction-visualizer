@@ -12,7 +12,6 @@
   }
   canvas { position: absolute; }
   .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
-  .label {z-index: 2; position: absolute; color: white;}
   .town {
     animation-duration: 25s;
     animation-name: fadeout;
@@ -55,65 +54,146 @@ function mapSourceToTarget(source, max_target, min_target, max_source, min_sourc
     return target;
 }
 
-var maxMinLatLong = {};
-maxMinLatLong['IE'] = { max_latitude: 55.25, max_longitude: -5.44304, min_latitude: 51.52487, min_longitude: -10.26889}
-maxMinLatLong['All'] = { max_latitude: 78.22334, max_longitude: 179.36451, min_latitude: -77.846, min_longitude: -179.12198}
-maxMinLatLong['Europe'] = { max_latitude: 71.04137, max_longitude: 64.41667, min_latitude: 34.8346, min_longitude: -10.26889}
-
 function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var coordinates = maxMinLatLong[country];
     var margin = 20;
-    var maxX = canvas.width - (margin * 2);
+    var maxX = canvas.width - margin;
     var minX = margin;
-    var maxY = canvas.height - (margin * 2);
+    var maxY = canvas.height - margin;
     var minY = margin;
     
     var x = mapSourceToTarget(longitude, maxX, minX, coordinates.max_longitude, coordinates.min_longitude);
     var y = mapSourceToTarget(latitude, maxY, minY, coordinates.max_latitude, coordinates.min_latitude);
-    y = maxY - y;
+    y = maxY - (y - margin);
     return {x:x, y:y}
 }
 
 
-var country  = {
-  code: "All",
-  left: 0,
-  top: 0,
-  width: screen.width,
-  height: screen.height,
-};
+function fillMaxMinLatLong() {
+  for (const [country_code, coasts] of Object.entries(coastline)) {
+    var continent_code = continent[country_code];
+    for (var h = 0; h < coasts.length; h++) {
+      var coast = coasts[h];
+      if (!maxMinLatLong["Default"]) {
+        maxMinLatLong["Default"] = { max_latitude: parseFloat(coast[1]),
+                                        min_latitude: parseFloat(coast[1]),
+                                        max_longitude : parseFloat(coast[0]),
+                                        min_longitude : parseFloat(coast[0])};
+      }
+      if (!maxMinLatLong[country_code]) {
+        maxMinLatLong[country_code] = { max_latitude: parseFloat(coast[1]),
+                                        min_latitude: parseFloat(coast[1]),
+                                        max_longitude : parseFloat(coast[0]),
+                                        min_longitude : parseFloat(coast[0])};
+      }
+      if (!maxMinLatLong[continent_code]) {
+        maxMinLatLong[continent_code] = { max_latitude: parseFloat(coast[1]),
+                                          min_latitude: parseFloat(coast[1]),
+                                          max_longitude : parseFloat(coast[0]),
+                                          min_longitude : parseFloat(coast[0])};
+      }
+      for (var i = 2; i < coast.length; i+=2) {
+        var codes = [country_code, continent_code, "Default"]; 
+        if (isNaN(parseFloat(coast[i+1]))) {
+          break;
+        }
+        for (var j = 0; j < codes.length; j++) {
+          var code = codes[j];
+          maxMinLatLong[code].max_latitude = Math.max(maxMinLatLong[code].max_latitude, parseFloat(coast[i+1]));
+          maxMinLatLong[code].min_latitude = Math.min(maxMinLatLong[code].min_latitude, parseFloat(coast[i+1]));
+          maxMinLatLong[code].max_longitude = Math.max(maxMinLatLong[code].max_longitude, parseFloat(coast[i]));
+          maxMinLatLong[code].min_longitude = Math.min(maxMinLatLong[code].min_longitude, parseFloat(coast[i])); 
+        }
+      }
+    }
+  }
+}
 
-var container = document.createElement("div");
-container.className = 'container';
-container.id = country.code + "-container";
-container.style.left = country.left + 'px'; 
-container.style.top = country.top + 'px'; 
-container.style.width = country.width + 'px';
-container.style.height = country.height + 'px';
-container.style.backgroundColor = 'black';
-document.body.appendChild(container);
+var countries_for_map = [];
+countries_for_map[0] = ['IE']
+countries_for_map[1] = ['GB']
+countries_for_map[2] = ['Default']
 
-var canvasElement = document.createElement("canvas");
-canvasElement.id = country.code + "-layer";
-canvasElement.width = country.width;
-canvasElement.height = country.height;
-container.appendChild(canvasElement);
+var map_for_country = [];
+map_for_country['IE'] = 0;
+map_for_country['GB'] = 1;
+map_for_country['Default'] = 2;
+
+var maps = [ 
+  {
+    left: 0,
+    top: screen.height - (screen.width / 4),
+    zindex:9,
+    width: screen.width / 4,
+    height: screen.width / 4,
+  },
+  { 
+    width: screen.width / 6,
+    height: (screen.width / 6),
+    zindex:8,
+    top: screen.height - ((screen.width / 4) + (screen.width / 6)),
+    left: 0
+  },
+  { 
+    width: screen.width,
+    height: screen.height,
+    zindex: 0,
+    left: 0,
+    top: 0,
+  },
+];
+
+for (var i = 0; i < maps.length; i++) {
+  setUpMap(maps[i], countries_for_map[i]);
+}
+
+function setUpMap(map, country) {
+  var container = document.createElement("div");
+  container.className = 'container';
+  container.id = country + "-container";
+  container.style.left = map.left + 'px'; 
+  container.style.top = map.top + 'px'; 
+  container.style.width = map.width + 'px';
+  container.style.height = map.height + 'px';
+  container.style.backgroundColor = 'black';
+  container.style.zIndex = map.zindex;
+  document.body.appendChild(container);
+
+  var canvasElement = document.createElement("canvas");
+  canvasElement.id = country + "-layer";
+  canvasElement.width = map.width;
+  canvasElement.height = map.height;
+  container.appendChild(canvasElement);
+}
+
+var maxMinLatLong = {};
+fillMaxMinLatLong();
 
 for (const [code, coasts] of Object.entries(coastline)) {
+  var map_code = code;
+  if (!map_for_country.hasOwnProperty(map_code)) {
+    map_code = "Default";
+  }
+  var canvasElement = document.getElementById(map_code + "-layer");
+  var ctx = canvasElement.getContext('2d');
   for (var h = 0; h < coasts.length; h++) {
-    var ctx = canvasElement.getContext('2d');
     ctx.strokeStyle = 'white';
+    ctx.lineWidth = 0.2;
     ctx.beginPath();
 
     var coast = coasts[h];
-    var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, "All"); 
+    // Ignore small islands
+    if (coast.length < 20) {
+      continue;
+    }
+    var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, map_code); 
     var prevOffset = offset;
     ctx.moveTo(offset.x, offset.y);
 
     for (var i = 2; i < coast.length; i+=2) {
-        offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, "All"); 
-        ctx.lineTo(offset.x, offset.y);
-        prevOffset = offset;
+      offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, map_code); 
+      ctx.lineTo(offset.x, offset.y);
+      prevOffset = offset;
     }
     ctx.stroke();
   }
