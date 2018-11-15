@@ -43,11 +43,7 @@ while True:
         break
     line_array = line.split('\t')
     country = line_array[8]
-    if country not in ["IE", "GB", "DE", "FR", "ES"]:
-        continue
     timezone = line_array[17][0:6]
-    if timezone not in ["Europe"]:
-        continue
     town = line_array[2]
     latitude = line_array[4]
     longitude = line_array[5]

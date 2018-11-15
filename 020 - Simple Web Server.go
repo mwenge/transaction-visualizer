@@ -10,7 +10,7 @@ import (
 
 func main() {
   helloHandler := func(w http.ResponseWriter, req *http.Request) {
-    file, err := os.Open("./900-Geo.txt")
+    file, err := os.Open("./901-Geo.txt")
     if err != nil {
       log.Fatal(err)
     }
@@ -23,7 +23,7 @@ func main() {
     }
   }
 
-  http.HandleFunc("/900-Geo.txt", helloHandler)
+  http.HandleFunc("/901-Geo.txt", helloHandler)
   http.Handle("/", http.FileServer(http.Dir("./")))
   if err := http.ListenAndServe(":8080", nil); err != nil {
     panic(err)
