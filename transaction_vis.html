@@ -241,6 +241,9 @@ class ProcessMap {
             var chunkToDecode = chunk.slice(chunkStart, i);
             var inputString = new TextDecoder("utf-8").decode(chunkToDecode);
             inputString = this.prevChunk + inputString;
+            if (inputString == "") {
+                continue;
+            }
 
             var stringArray = inputString.split(',');
             var country = stringArray[9];
