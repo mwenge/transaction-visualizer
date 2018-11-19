@@ -14,7 +14,7 @@
   .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
   .label {z-index: 2; position: absolute; color: white;}
   .town {
-    animation-duration: 10s;
+    animation-duration: 40s;
     animation-name: fadeout;
   }
   .animation {
@@ -43,6 +43,12 @@
       0 0 150px #0ff;
   }
   */
+  .title {
+    font-size: 30px;
+    top: 5px;
+    right: 25px;
+    display: inline-block;
+  }
   .description {
     font-size: 12px;
     bottom: 5px;
@@ -57,6 +63,7 @@
   }
 </style>
 <div class="label clock" id="clock-layer" width="150" height="200"></div>
+<div class="label title" id="description-layer" width="150" height="200">AIB Card Transaction Activity</div>
 <div class="label description" id="description-layer" width="150" height="200">
   <div class="legend"></div> Approved &nbsp; &nbsp;
   <div class="legend" style="background-color: red;"></div> Declined &nbsp; &nbsp;
@@ -131,6 +138,9 @@ function fillMaxMinLatLong() {
 
 function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var coordinates = maxMinLatLong[country];
+    if (country == "DB") {
+        console.log(coordinates);
+    }
     var margin = 20;
     var maxX = canvas.width - margin;
     var minX = margin;
@@ -140,6 +150,9 @@ function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var x = mapSourceToTarget(longitude, maxX, minX, coordinates.max_longitude, coordinates.min_longitude);
     var y = mapSourceToTarget(latitude, maxY, minY, coordinates.max_latitude, coordinates.min_latitude);
     y = maxY - (y - margin);
+    if (country == "DB") {
+        console.log(x, y);
+    }
     return {x:x, y:y}
 }
 
@@ -217,6 +230,26 @@ function drawEvent() {
     document.getElementById('clock-layer').textContent = evt.authTime;
 }
 
+function checkIfFallsIntoArea(latitude, longitude) {
+  for (var i = 0; i < areas.length; i++) {
+      var max_min = maxMinLatLong[areas[i]];
+      if (latitude > max_min.max_latitude) {
+          continue;
+      }
+      if (latitude < max_min.min_latitude) {
+          continue;
+      }
+      if (longitude > max_min.max_longitude) {
+          continue;
+      }
+      if (longitude < max_min.min_longitude) {
+          continue;
+      }
+      return areas[i];
+  }
+  return ""
+}
+
 class ProcessMap {
     /**
      * @param {string} name
@@ -246,9 +279,14 @@ class ProcessMap {
             }
 
             var stringArray = inputString.split(',');
-            var country = stringArray[9];
-            if (!map_for_country.hasOwnProperty(country)) {
-              country = "Default";
+            var latitude = stringArray[7];
+            var longitude = stringArray[8];
+            var country = checkIfFallsIntoArea(latitude, longitude);
+            if (country == "") {
+                country = stringArray[9];
+                if (!map_for_country.hasOwnProperty(country)) {
+                    country = "Default";
+                }
             }
             var canvasID = country + '-layer';
             var canvas = document.getElementById(canvasID);
@@ -264,8 +302,6 @@ class ProcessMap {
             var amount = stringArray[4];
             var age = stringArray[5];
             var town = stringArray[6];
-            var latitude = stringArray[7];
-            var longitude = stringArray[8];
             var offset = mapCoordinatesToOffset(latitude, longitude, canvas, country);
 
             events.push( { authTime: authTime,
@@ -398,27 +434,36 @@ function setUpMap(map, country) {
 var countries_for_map = [];
 countries_for_map[0] = ['IE']
 countries_for_map[1] = ['GB']
-countries_for_map[2] = ['Default']
+countries_for_map[2] = ['DB']
+countries_for_map[3] = ['Default']
 
 var map_for_country = [];
 map_for_country['IE'] = 0;
 map_for_country['GB'] = 1;
-map_for_country['Default'] = 2;
+map_for_country['DB'] = 2;
+map_for_country['Default'] = 3;
 
 var maps = [ 
   {
     left: 0,
-    top: screen.height - (screen.width / 4),
+    top: screen.height - (screen.width / 3),
     zindex:9,
-    width: screen.width / 4,
-    height: screen.width / 4,
+    width: screen.width / 3,
+    height: screen.width / 3,
   },
   { 
     width: screen.width / 6,
     height: (screen.width / 6),
     zindex:8,
-    top: screen.height - ((screen.width / 4) + (screen.width / 6)),
+    top: screen.height - ((screen.width / 3) + (screen.width / 6)),
     left: 0
+  },
+  { 
+    width: screen.width / 4,
+    height: (screen.width / 4),
+    zindex:8,
+    top: screen.height - screen.width / 4,
+    left: screen.width / 3
   },
   { 
     width: screen.width,
@@ -443,14 +488,10 @@ function runGeoMap() {
     var ctx = canvasElement.getContext('2d');
     for (var h = 0; h < coasts.length; h++) {
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = 0.2;
+      ctx.lineWidth = 0.3;
       ctx.beginPath();
 
       var coast = coasts[h];
-      // Ignore small islands
-      if (coast.length < 20) {
-        continue;
-      }
       var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, map_code); 
       var prevOffset = offset;
       ctx.moveTo(offset.x, offset.y);
@@ -464,10 +505,10 @@ function runGeoMap() {
     }
   }
 
-  window.setInterval(drawEvent, 100);
+  window.setInterval(drawEvent, 50);
 
   // Fetch the original image
-  fetch('http://127.0.0.1:8080/901-Geo.txt')
+  fetch('http://dsk-91fvg62:8080/901-Geo.txt')
   // Retrieve its body as ReadableStream
       .then(response => response.body)
   // Log each fetched Uint8Array chunk
