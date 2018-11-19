@@ -78,14 +78,6 @@ var events = [];
 
 var min_offset = 1;
 var max_offset = 1500000;
-var min_pixel = 1;
-var max_pixel = screen.width * screen.height;
-
-function mapOffsetToPixel(offset) {
-    var ratio = parseFloat(offset - min_offset) / parseFloat(max_offset - min_offset);
-    var pixel = parseInt(ratio * (max_pixel - min_pixel) + min_pixel);
-    return pixel;
-}
 
 function mapSourceToTarget(source, max_target, min_target, max_source, min_source) {
     var ratio = parseFloat(source - min_source) / parseFloat(max_source - min_source);
@@ -170,21 +162,6 @@ function addTownLabel(town, x, y, canvas) {
     div.style.color = '#ecf0f1';
     canvas.parentNode.appendChild(div); 
     div.addEventListener("animationend", removeElement);
-}
-
-function initialize(img, layerID) {
-    var canvas = document.getElementById(layerID);
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var data = imageData.data;
-
-    for (var i = 0; i < data.length; i += 4) {
-        data[i]     = 0;     // red
-        data[i + 1] = 0; // green
-        data[i + 2] = 0; // blue
-    }
-    ctx.putImageData(imageData, 0, 0);
 }
 
 function removeElement(evt) {
@@ -334,62 +311,6 @@ function processTransactionData(name, rs) {
     return rs1;
 }
 
-function addCountry(country) {
-  var container = document.createElement("div");
-  container.className = 'container';
-  container.id = country.code + "-container";
-  container.style.left = country.left + 'px'; 
-  container.style.top = country.top + 'px'; 
-  container.style.width = country.width + 'px';
-  container.style.height = country.height + 'px';
-  document.body.appendChild(container);
-  
-  var canvasElement = document.createElement("canvas");
-  canvasElement.id = country.code + "-layer";
-  canvasElement.width = country.width;
-  canvasElement.height = country.height;
-  var img = new Image();
-  img.onload = function() {
-      initialize(this, country.code + "-layer");
-  };
-  img.src = "Background.png"
-  img.width = country.width;
-  img.height = country.height;
-  container.appendChild(canvasElement);
-
-  var div = document.createElement('div');
-  div.className = 'label';
-  div.textContent = country.code;
-
-  div.style.bottom = '185px';
-  div.style.right = '180px';
-  div.style.fontSize = '60px';
-  div.style.color = 'gray';
-  container.appendChild(div); 
-
-  var animationStartX = (screen.width / 2) - country.left;
-  var animationStartY = (screen.height / 2) - country.top;
-  var style = document.createElement('style');
-  var css =
-    ".animation" + country.code + " {" +
-      "animation-duration: 3s;\n" +
-      "animation-name: slidein" + country.code + ";" +
-    "}\n" +
-    "@keyframes slidein" + country.code + " {" +
-      "from {" +
-        "position:absolute;" + 
-        "top: " + animationStartY + "px;" +
-        "left: " + animationStartX + "px;" +
-        "font-size: 50px;" +
-      "}" +
-      "to {" +
-      "}" +
-    "}";
-
-  style.innerHTML = css;
-  document.head.appendChild(style);
-}
-
 function setUpMap(map, country) {
   var container = document.createElement("div");
   container.className = 'container';
@@ -508,7 +429,7 @@ function runGeoMap() {
   window.setInterval(drawEvent, 50);
 
   // Fetch the original image
-  fetch('http://dsk-91fvg62:8080/901-Geo.txt')
+  fetch('901-Geo.txt')
   // Retrieve its body as ReadableStream
       .then(response => response.body)
   // Log each fetched Uint8Array chunk
