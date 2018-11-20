@@ -494,4 +494,54 @@ continent['ZW'] = 'AA';
 
 var areas = ['DB'];
 
-coastline['DB'] = [[-6.38013682545,53.6133271982,-6.0811087408,53.563609051,-6.22458177785,53.3527731725,-6.01305489526,53.0450001198]];
+// coastline['DB'] = [[-6.38013682545,53.6133271982,-6.0811087408,53.563609051,-6.22458177785,53.3527731725,-6.01305489526,53.0450001198]];
+
+coastline['DB'] = [
+ [
+-6.09833,53.20278,
+-6.21556,53.18667,
+-6.42917,53.17056,
+-6.5325,53.17,
+-6.66694,53.21583,
+-6.59361,53.385,
+-6.54,53.5125,
+-6.38556,53.56611,
+-6.1831,53.60846,
+-6.10833,53.58278,
+-6.15444,53.45083,
+-6.11059,53.38947,
+-6.06528,53.38778,
+-6.04556,53.38528,
+-6.07389,53.375,
+-6.11059,53.37947,
+-6.18032,53.36489,
+-6.22083,53.34222,
+-6.19985,53.30447,
+-6.13421,53.29551,
+-6.1169,53.26326,
+-6.09833,53.20278,
+ ]];
+
+
+//2966022	Bray	Bray	Bray,Bre,Brej,Brejus,Brey,Bri Chualann,Bré,Brėjus,beulei,brei,bry  ayrlnd,bu rui,burei,Брей,Бреј,Բրեյ,بری، ایرلند,ბრეი,ブレイ,布瑞,브레이	53.20278	-6.09833	P	PPL	IE		L	31			6477		7	Europe/Dublin	2013-12-08
+//3315179	Curtlestown	Curtlestown		53.18667	-6.21556	P	PPL	IE		L	31			0		220	Europe/Dublin	2010-08-14
+//3315153	Ballysmuttan	Ballysmuttan		53.17056	-6.42917	P	PPL	IE		L	31			0		310	Europe/Dublin	2010-08-14
+//2966101	Blessington	Blessington	Baile Coimin,Baile Coimín,Blesingtun,Blessington,Блесингтън,Блессингтон	53.17	-6.5325	P	PPL	IE		L	31			5010		207	Europe/Dublin	2013-11-26
+//2962334	Naas	Naas	An Nas,An Nás,Naas,Nas na Riogh,Neisas,Nejs,Nás na Ríogh,nei si,neiseu,neisi,nys,Нейс,Нејс,נאס,نئس,نیس,ნეისი,内斯,네이스	53.21583	-6.66694	P	PPLA2	IE		L	12			20713		93	Europe/Dublin	2013-12-08
+//2962668	Maynooth	Maynooth	Maigh Nuad,Manutia,Maynooth,Meinutas,Mejnut,mei nu si,meinusu,mnwth,myynwt,Мейнут,מיינות,منوث,مینوتھ,メイヌース,梅努斯	53.385	-6.59361	P	PPL	IE		L	12			12510		56	Europe/Dublin	2013-11-26
+//2964472	Dunshaughlin	Dunshaughlin	Dun Seachlainn,Dunshaughlin,Dún Seachlainn	53.5125	-6.54	P	PPL	IE		L	21			3903		100	Europe/Dublin	2013-11-26
+//2964152	Garristown	Garristown	Garristown	53.56611	-6.38556	P	PPL	IE		L	35			433		130	Europe/Dublin	2016-09-12
+//2966794	Balbriggan	Balbriggan	Baile Brigin,Baile Brigín,Balbrigan,Balbriganas,Balbriggan,ba er bu li gen,balbrigani,balbrygan,Балбриган,Балбригган,بالبریگان,ბალბრიგანი,巴爾布里根	53.60846	-6.1831	P	PPL	IE		L	35			23364		-9999	Europe/Dublin	2018-08-03
+//2961461	Skerries	Skerries	Na Sceiri,Na Sceirí,Skerijs,Skerries,Skerris,Скерийс,Скеррис	53.58278	-6.10833	P	PPL	IE		L	35			9671		-9999	Europe/Dublin	2013-11-26
+//2962725	Malahide	Malahide	Malahaidas,Malahide,Malakhajd,Mullach Ide,Mullach Íde,ma la hai de,malahayd,Малахайд,مالاهاید,مالاہائڈ,馬拉海德	53.45083	-6.15444	P	PPL	IE		L	35			15846		11	Europe/Dublin	2016-09-12
+//2961305	Sutton	Sutton	Sutton	53.38947	-6.11059	P	PPL	IE		L	35			3837		5	Europe/Dublin	2016-09-12
+//2963722	Howth	Howth	Binn Eadair,Binn Éadair,Howth,Khout,hoseu,Хоут,호스	53.38778	-6.06528	P	PPL	IE		L	35			4574	171	17	Europe/Dublin	2013-12-08
+//2962207	Nose of Howth	Nose of Howth		53.38528	-6.04556	T	PT	IE		L	07			0		-9999	Europe/Dublin	2010-08-14
+//2963721	Ben of Howth	Ben of Howth	Ben of Howth,Hill of Howth,Shelmartin	53.375	-6.07389	T	HLL	IE	IE	L	35			0		146	Europe/Dublin	2017-07-25
+//2961305	Sutton	Sutton	Sutton	53.38947	-6.11059	P	PPL	IE		L	35			3837		5	Europe/Dublin	2016-09-12
+//2964767	Dollymount	Dollymount		53.36489	-6.18032	P	PPL	IE		L	33			5070		11	Europe/Dublin	2017-07-25
+//3289060	Ringsend Park	Ringsend Park		53.34222	-6.22083	L	PRK	IE		L	33			0		5	Europe/Dublin	2017-07-26
+//6691006	Booterstown	Booterstown	Baile an Bhothair,Baile an Bhóthair	53.30447	-6.19985	P	PPLX	IE		L	34			7142		26	Europe/Dublin	2017-07-20
+//9253590	Dun Laoghaire Port	Dun Laoghaire Port	Dun Laoghaire Ferry Port	53.29551	-6.13421	L	PRT	IE		L	34			0		4	Europe/Dublin	2017-07-25
+//2963324	Killiney	Killiney	Cill Inion Leinin,Cill Iníon Léinín	53.26326	-6.1169	P	PPL	IE		L	34			0		112	Europe/Dublin	2016-09-12
+//2966022	Bray	Bray	Bray,Bre,Brej,Brejus,Brey,Bri Chualann,Bré,Brėjus,beulei,brei,bry  ayrlnd,bu rui,burei,Брей,Бреј,Բրեյ,بری، ایرلند,ბრეი,ブレイ,布瑞,브레이	53.20278	-6.09833	P	PPL	IE		L	31			6477		7	Europe/Dublin	2013-12-08

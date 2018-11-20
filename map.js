@@ -257,6 +257,12 @@ function setUpMap(map, country) {
   canvasElement.height = map.height;
   container.appendChild(canvasElement);
 
+  var label = document.createElement("div");
+  label.className = 'label description';
+  label.style.zIndex = map.zindex;
+  label.textContent = labels_for_map[country];
+  container.appendChild(label);
+
   var animationStartX = (screen.width / 2) - map.left;
   var animationStartY = (screen.height / 2) - map.top;
   var style = document.createElement('style');
@@ -285,6 +291,12 @@ countries_for_map[0] = ['IE']
 countries_for_map[1] = ['GB']
 countries_for_map[2] = ['DB']
 countries_for_map[3] = ['Default']
+
+var labels_for_map = [];
+labels_for_map['IE'] = ['Ireland']
+labels_for_map['GB'] = ['Great Britain']
+labels_for_map['DB'] = ['Dublin']
+labels_for_map['Default'] = ['']
 
 var map_for_country = [];
 map_for_country['IE'] = 0;
