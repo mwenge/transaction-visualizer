@@ -16,6 +16,15 @@ function mapSourceToTarget(source, max_target, min_target, max_source, min_sourc
 var maxMinLatLong = {};
 fillMaxMinLatLong();
 
+var chart = {
+  width: 300,
+  height: 20,
+  zindex: 6,
+  right: 220,
+  bottom: 1,
+  id: "Approvals",
+};
+
 function fillMaxMinLatLong() {
   for (const [country_code, coasts] of Object.entries(coastline)) {
     var continent_code = continent[country_code];
@@ -58,9 +67,6 @@ function fillMaxMinLatLong() {
 
 function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var coordinates = maxMinLatLong[country];
-    if (country == "DB") {
-        console.log(coordinates);
-    }
     var margin = 20;
     var maxX = canvas.width - margin;
     var minX = margin;
@@ -70,9 +76,6 @@ function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
     var x = mapSourceToTarget(longitude, maxX, minX, coordinates.max_longitude, coordinates.min_longitude);
     var y = mapSourceToTarget(latitude, maxY, minY, coordinates.max_latitude, coordinates.min_latitude);
     y = maxY - (y - margin);
-    if (country == "DB") {
-        console.log(x, y);
-    }
     return {x:x, y:y}
 }
 
@@ -133,6 +136,19 @@ function drawEvent() {
 
     addTownLabel(evt.town, x, y - 10, evt.canvas);
     document.getElementById('clock-layer').textContent = evt.authTime;
+
+    if (typeof drawEvent.auths == "undefined") {
+      drawEvent.auths = 0;
+      drawEvent.prevAuthTime = evt.authTime;
+    }
+
+    if (evt.authTime != drawEvent.prevAuthTime) {
+      console.log(drawEvent.auths);
+      addLine(chart, (drawEvent.auths / 30) * 100);
+      drawEvent.auths = 0;
+    }
+    drawEvent.prevAuthTime = evt.authTime;
+    drawEvent.auths++;
 }
 
 function checkIfFallsIntoArea(latitude, longitude) {
@@ -366,10 +382,12 @@ function runGeoMap() {
     }
   }
 
+  setUpChart(chart);
+
   window.setInterval(drawEvent, 50);
 
   // Fetch the original image
-  fetch('901-Geo.txt')
+  fetch('900-Geo.txt')
   // Retrieve its body as ReadableStream
       .then(response => response.body)
   // Log each fetched Uint8Array chunk

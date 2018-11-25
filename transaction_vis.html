@@ -12,6 +12,7 @@
   }
   canvas { position: absolute; }
   .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
+  .sparkline-container { position: absolute; padding: 0; border: 0; }
   .label {z-index: 2; position: absolute; color: white;}
   .town {
     animation-duration: 40s;
@@ -61,6 +62,37 @@
     width: 10px;
     height: 10px;
   }
+  .sparklist {
+    overflow: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  } 
+  .sparkline { 
+    display: inline-block;
+    height: 100%;
+    margin: 0;
+    transition: all .5s ease;
+  }
+
+  .sparkline .index { 
+    position: relative;
+    float: left; 
+    width: 0.5px; 
+    height: 100%; 
+  }
+
+  .sparkline .index .count { 
+    display: block; 
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 0; 
+    background: linear-gradient(#9AFF87, #1d1f20);
+    border-top: 0.2px solid white;
+    opacity: 0.5;
+  }
 </style>
 <div class="label clock" id="clock-layer" width="150" height="200"></div>
 <div class="label title" id="description-layer" width="150" height="200">AIB Card Transaction Activity</div>
@@ -69,6 +101,7 @@
   <div class="legend" style="background-color: red;"></div> Declined &nbsp; &nbsp;
 </div>
 <script src="geodata.js"></script>
+<script src="graph.js"></script>
 <script src="map.js"></script>
 <script>
 runGeoMap();

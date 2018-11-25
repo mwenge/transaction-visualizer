@@ -10,7 +10,7 @@ def write_record(auth_date_time, record):
     age_max = 95
     upper_range = 1500000
     cust_id = random.randint(1, upper_range)
-    if record % 10 == 0:
+    if record % random.randint(10, 15) == 0:
         auth_date_time = auth_date_time + timedelta(seconds=1) 
     auth_date = auth_date_time.strftime("%Y-%m-%d")
     auth_time = auth_date_time.strftime("%H:%M:%S")
