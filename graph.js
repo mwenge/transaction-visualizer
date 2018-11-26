@@ -5,33 +5,41 @@ var points = [];
 var difference =[];
 
 
-function drawGrid(id, width, height, column, line) {
-  var ctx = document.getElementById(id + '-chart').getContext('2d');
-  ctx.fillStyle ="#050505";
-  ctx.strokeStyle ="#333";
+function drawGrid(chart) {
+  var width = chart.width;
+  var column = width / (width / 4);
+  var line = chart.height / (chart.height / 4);
+  var ctx = document.getElementById(chart.id + '-chart').getContext('2d');
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle ="#040404";
+  ctx.strokeStyle ="#222";
   ctx.save();
-  ctx.fillRect(0,0,width,height);
+  ctx.fillRect(0, 0, width, chart.height);
   ctx.save();
-  for (var c=1; c<(width/column); c++) {
+  for (var c=1; c < (width / column); c++) {
     ctx.beginPath();
-    ctx.moveTo(c*column,0);
-    ctx.lineTo(c*column,height);
+    ctx.moveTo(c * column, 0);
+    ctx.lineTo(c * column, chart.height);
     ctx.stroke();
   }
-  for (var l=1; l<(height/line); l++) {
+  for (var l=1; l < (chart.height / line); l++) {
     ctx.beginPath();
-    ctx.moveTo(0,l*line);
-    ctx.lineTo(width, l*line);
+    ctx.moveTo(0, l * line);
+    ctx.lineTo(width, l * line);
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle ="#fff";
+  ctx.font = '10px Orbitron';
+  ctx.fillText(chart.id, width - 50, 10);
 }
 
-function addInterval(sparkline, height) {
+function addInterval(chart, sparkline, height) {
   var lineContainer = document.createElement("span");
   lineContainer.className = 'index';
   sparkline.appendChild(lineContainer);
   var line = document.createElement("span");
-  line.className = 'count';
+  line.className = 'count ' + chart.id + '-count';
   line.style.height = height + "%";
   lineContainer.appendChild(line);
 }
@@ -47,23 +55,25 @@ function addLine(chart, toHeight) {
   }
 
   var difference = Math.abs(fromHeight - toHeight);
+  console.log(sparkline.childNodes.length, chart.width);
   while (sparkline.childNodes.length >= (chart.width - 2) * 2) {
-      sparkline.removeChild(sparkline.firstChild);
+    sparkline.removeChild(sparkline.firstChild);
   }
 
-  var increment = Math.max(1, difference / 4);
-  if (fromHeight >= toHeight) {
-    for (var i = fromHeight; i >= toHeight; i -= increment) {
-      addInterval(sparkline, i);
+  var minimumTicks = 4;
+  var increment = Math.max(0, difference / minimumTicks);
+  for (var i = 0; i < 4; i++) {
+    if (fromHeight >= toHeight) {
+      fromHeight -= increment;
+    } else {
+      fromHeight += increment;
     }
-    return;
-  }
-  for (var i = fromHeight; i <= toHeight; i += increment) {
-    addInterval(sparkline, i);
+    addInterval(chart, sparkline, fromHeight);
   }
 }
 
 function setUpChart(chart) {
+  chart.width = screen.width / 2;
   var container = document.createElement("div");
   container.className = 'sparkline-container';
   container.id = chart.id + "-container";
@@ -81,7 +91,7 @@ function setUpChart(chart) {
   canvasElement.height = chart.height;
   container.appendChild(canvasElement);
 
-  drawGrid(chart.id, chart.width, chart.height, chart.width / 50, chart.height / 14);
+  drawGrid(chart);
 
   var sparklist = document.createElement("div");
   sparklist.className = 'sparklist';

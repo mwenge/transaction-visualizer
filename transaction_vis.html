@@ -12,7 +12,7 @@
   }
   canvas { position: absolute; }
   .container { box-sizing: border-box; position: absolute; border: 1px inset white; }
-  .sparkline-container { position: absolute; padding: 0; border: 0; }
+  .sparkline-container { position: absolute; padding: 0; border: 0; opacity: 0.5; }
   .label {z-index: 2; position: absolute; color: white;}
   .town {
     animation-duration: 40s;
@@ -52,6 +52,12 @@
   }
   .description {
     font-size: 12px;
+    top: 45px;
+    right: 5px;
+    display: inline-block;
+  }
+  .map-description {
+    font-size: 12px;
     bottom: 5px;
     right: 5px;
     display: inline-block;
@@ -70,6 +76,7 @@
   } 
   .sparkline { 
     display: inline-block;
+    float: right;
     height: 100%;
     margin: 0;
     transition: all .5s ease;
@@ -89,9 +96,15 @@
     left: 0; 
     width: 100%; 
     height: 0; 
+    opacity: 0.9;
+  }
+  .sparkline .index .Approve-count {
     background: linear-gradient(#9AFF87, #1d1f20);
     border-top: 0.2px solid white;
-    opacity: 0.5;
+  }
+  .sparkline .index .Decline-count {
+    background: linear-gradient(#dd0000, #1d1f20);
+    border-top: 0.2px solid red;
   }
 </style>
 <div class="label clock" id="clock-layer" width="150" height="200"></div>

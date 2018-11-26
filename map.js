@@ -16,14 +16,26 @@ function mapSourceToTarget(source, max_target, min_target, max_source, min_sourc
 var maxMinLatLong = {};
 fillMaxMinLatLong();
 
-var chart = {
-  width: 300,
-  height: 20,
+var charts = [
+  {
+  height: 60,
+  width: 0,
   zindex: 6,
-  right: 220,
-  bottom: 1,
-  id: "Approvals",
-};
+  right: 5,
+  bottom: 5,
+  id: "Approve",
+  max: 30,
+  },
+  {
+  height: 60,
+  width: 0,
+  zindex: 5,
+  right: 5,
+  bottom: 70,
+  id: "Decline",
+  max: 10,
+  },
+];
 
 function fillMaxMinLatLong() {
   for (const [country_code, coasts] of Object.entries(coastline)) {
@@ -138,17 +150,23 @@ function drawEvent() {
     document.getElementById('clock-layer').textContent = evt.authTime;
 
     if (typeof drawEvent.auths == "undefined") {
-      drawEvent.auths = 0;
+      drawEvent.auths = {};
       drawEvent.prevAuthTime = evt.authTime;
     }
 
     if (evt.authTime != drawEvent.prevAuthTime) {
-      console.log(drawEvent.auths);
-      addLine(chart, (drawEvent.auths / 30) * 100);
-      drawEvent.auths = 0;
+      for (var i = 0; i < charts.length; i++) {
+        var chartName = charts[i].id;
+        addLine(charts[i], (drawEvent.auths[chartName] / charts[i].max) * 100);
+        drawEvent.auths[chartName] = 0;
+      }
     }
     drawEvent.prevAuthTime = evt.authTime;
-    drawEvent.auths++;
+    if (!drawEvent.auths.hasOwnProperty(evt.response)) {
+      drawEvent.auths[evt.response] = 1;
+    } else {
+      drawEvent.auths[evt.response]++;
+    }
 }
 
 function checkIfFallsIntoArea(latitude, longitude) {
@@ -219,13 +237,15 @@ class ProcessMap {
             }
             var authTime = stringArray[1] + ' ' + stringArray[2];
 
-            var hex = colors[stringArray[3]].hex;
+            var response = stringArray[3];
+            var hex = colors[response].hex;
             var amount = stringArray[4];
             var age = stringArray[5];
             var town = stringArray[6];
             var offset = mapCoordinatesToOffset(latitude, longitude, canvas, country);
 
-            events.push( { authTime: authTime,
+            events.push( { 
+                          authTime: authTime,
                           amount: amount,
                           town: town,
                           latitude: latitude,
@@ -233,7 +253,9 @@ class ProcessMap {
                           offset: offset,
                           canvas: canvas,
                           country: country,
-                          hex: hex } );
+                          hex: hex, 
+                          response: response, 
+                          } );
 
             chunkStart = i + 1;
             this.prevChunk = '';
@@ -274,13 +296,13 @@ function setUpMap(map, country) {
   container.appendChild(canvasElement);
 
   var label = document.createElement("div");
-  label.className = 'label description';
+  label.className = 'label map-description';
   label.style.zIndex = map.zindex;
   label.textContent = labels_for_map[country];
   container.appendChild(label);
 
-  var animationStartX = (screen.width / 2) - map.left;
-  var animationStartY = (screen.height / 2) - map.top;
+  // var animationStartX = (screen.width / 2) - map.left;
+  // var animationStartY = (screen.height / 2) - map.top;
   var style = document.createElement('style');
   var css =
     ".animation" + country + " {" +
@@ -290,9 +312,9 @@ function setUpMap(map, country) {
     "@keyframes slidein" + country + " {" +
       "from {" +
         "position:absolute;" + 
-        "top: " + animationStartY + "px;" +
-        "left: " + animationStartX + "px;" +
-        "font-size: 50px;" +
+//        "top: " + animationStartY + "px;" +
+//        "left: " + animationStartX + "px;" +
+        "font-size: 20px;" +
       "}" +
       "to {" +
       "}" +
@@ -382,7 +404,10 @@ function runGeoMap() {
     }
   }
 
-  setUpChart(chart);
+
+  for (var i = 0; i < charts.length; i++) {
+    setUpChart(charts[i], screen.width / 2);
+  }
 
   window.setInterval(drawEvent, 50);
 
