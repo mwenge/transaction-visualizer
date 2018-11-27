@@ -77,9 +77,9 @@ function fillMaxMinLatLong() {
   }
 }
 
-function mapCoordinatesToOffset(latitude, longitude, canvas, country) {
-    var coordinates = maxMinLatLong[country];
-    var margin = 20;
+function mapCoordinatesToOffset(latitude, longitude, canvas, mapCode) {
+    var coordinates = maxMinLatLong[mapCode];
+    var margin = zoomedAreas.includes(mapCode) ? 0 : 20;
     var maxX = canvas.width - margin;
     var minX = margin;
     var maxY = canvas.height - margin;
@@ -169,9 +169,9 @@ function drawEvent() {
     }
 }
 
-function checkIfFallsIntoArea(latitude, longitude) {
-  for (var i = 0; i < areas.length; i++) {
-      var max_min = maxMinLatLong[areas[i]];
+function nameOfZoomedArea(latitude, longitude) {
+  for (var i = 0; i < zoomedAreas.length; i++) {
+      var max_min = maxMinLatLong[zoomedAreas[i]];
       if (latitude > max_min.max_latitude) {
           continue;
       }
@@ -184,7 +184,7 @@ function checkIfFallsIntoArea(latitude, longitude) {
       if (longitude < max_min.min_longitude) {
           continue;
       }
-      return areas[i];
+      return zoomedAreas[i];
   }
   return ""
 }
@@ -220,14 +220,15 @@ class ProcessMap {
             var stringArray = inputString.split(',');
             var latitude = stringArray[7];
             var longitude = stringArray[8];
-            var country = checkIfFallsIntoArea(latitude, longitude);
-            if (country == "") {
-                country = stringArray[9];
-                if (!map_for_country.hasOwnProperty(country)) {
-                    country = "Default";
+            var mapCode = nameOfZoomedArea(latitude, longitude);
+            if (mapCode == "") {
+                var mapCode = stringArray[9];
+                if (!map_for_country.hasOwnProperty(mapCode)) {
+                    mapCode = "Default";
                 }
             }
-            var canvasID = country + '-layer';
+
+            var canvasID = mapCode + '-layer';
             var canvas = document.getElementById(canvasID);
             if (canvas == null) {
                 chunkStart = i + 1;
@@ -242,7 +243,7 @@ class ProcessMap {
             var amount = stringArray[4];
             var age = stringArray[5];
             var town = stringArray[6];
-            var offset = mapCoordinatesToOffset(latitude, longitude, canvas, country);
+            var offset = mapCoordinatesToOffset(latitude, longitude, canvas, mapCode);
 
             events.push( { 
                           authTime: authTime,
@@ -252,7 +253,7 @@ class ProcessMap {
                           longitude: longitude,
                           offset: offset,
                           canvas: canvas,
-                          country: country,
+                          country: mapCode,
                           hex: hex, 
                           response: response, 
                           } );
@@ -373,17 +374,13 @@ var maps = [
   },
 ];
 
-function runGeoMap() {
-  for (var i = 0; i < maps.length; i++) {
-    setUpMap(maps[i], countries_for_map[i]);
-  }
-
+function paintMaps() {
   for (const [code, coasts] of Object.entries(coastline)) {
-    var map_code = code;
-    if (!map_for_country.hasOwnProperty(map_code)) {
-      map_code = "Default";
+    var mapCode = code;
+    if (!map_for_country.hasOwnProperty(mapCode)) {
+      mapCode = "Default";
     }
-    var canvasElement = document.getElementById(map_code + "-layer");
+    var canvasElement = document.getElementById(mapCode + "-layer");
     var ctx = canvasElement.getContext('2d');
     for (var h = 0; h < coasts.length; h++) {
       ctx.strokeStyle = 'white';
@@ -391,19 +388,26 @@ function runGeoMap() {
       ctx.beginPath();
 
       var coast = coasts[h];
-      var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, map_code); 
+      var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, mapCode); 
       var prevOffset = offset;
       ctx.moveTo(offset.x, offset.y);
 
       for (var i = 2; i < coast.length; i+=2) {
-        offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, map_code); 
+        offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, mapCode); 
         ctx.lineTo(offset.x, offset.y);
         prevOffset = offset;
       }
       ctx.stroke();
     }
   }
+}
 
+function runGeoMap() {
+  for (var i = 0; i < maps.length; i++) {
+    setUpMap(maps[i], countries_for_map[i]);
+  }
+
+  paintMaps();
 
   for (var i = 0; i < charts.length; i++) {
     setUpChart(charts[i], screen.width / 2);

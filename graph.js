@@ -55,7 +55,6 @@ function addLine(chart, toHeight) {
   }
 
   var difference = Math.abs(fromHeight - toHeight);
-  console.log(sparkline.childNodes.length, chart.width);
   while (sparkline.childNodes.length >= (chart.width - 2) * 2) {
     sparkline.removeChild(sparkline.firstChild);
   }
