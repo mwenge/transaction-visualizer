@@ -308,6 +308,7 @@ function setUpMap(map, country) {
   label.textContent = labels_for_map[country];
   container.appendChild(label);
 
+  var initialAnimationSize = 30;
   // var animationStartX = (screen.width / 2) - map.left;
   // var animationStartY = (screen.height / 2) - map.top;
   var style = document.createElement('style');
@@ -321,8 +322,8 @@ function setUpMap(map, country) {
         "position:absolute;" + 
 //        "top: " + animationStartY + "px;" +
 //        "left: " + animationStartX + "px;" +
-        "transform: translateX(-20px);" +
-        "font-size: 20px;" +
+        "transform: translateX(-" + initialAnimationSize + "px);" +
+        "font-size: " + initialAnimationSize + "px;" +
       "}" +
       "to {" +
       "}" +
