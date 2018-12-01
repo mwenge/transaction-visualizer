@@ -34,17 +34,30 @@ function drawGrid(chart) {
   ctx.fillText(chart.id, width - 50, 10);
 }
 
-function addInterval(chart, sparkline, height) {
+function addInterval(chart, auth, sparkline, height, addLabel) {
   var lineContainer = document.createElement("span");
   lineContainer.className = 'index';
   sparkline.appendChild(lineContainer);
   var line = document.createElement("span");
   line.className = 'count ' + chart.id + '-count';
   line.style.height = height + "%";
+  if (addLabel) {
+    line.style.width = "1px";
+  }
   lineContainer.appendChild(line);
+
+  if (auth.auths > chart.max && addLabel) {
+    var label = document.createElement("div");
+    label.className = 'sparkline-label';
+    label.textContent = auth.authTime.substr(-8) + " (" + auth.auths + ")";
+    label.style.top = "-" + (line.clientHeight - lineContainer.clientHeight) + "px";
+    label.style.transform = "rotate(-45deg)";
+    console.log("placing label", auth.auths, chart.max, line.clientHeight, height, lineContainer.clientHeight);
+    lineContainer.appendChild(label);
+  }
 }
 
-function addLine(chart, toHeight) {
+function addLine(chart, auth, toHeight) {
   var sparkline = document.getElementById(chart.id + "-sparkline");
 
   var lastLine = sparkline.lastChild;
@@ -61,14 +74,19 @@ function addLine(chart, toHeight) {
 
   var minimumTicks = 4;
   var increment = Math.max(0, difference / minimumTicks);
-  for (var i = 0; i < 4; i++) {
-    if (fromHeight >= toHeight) {
+  if (auth.auths > chart.max) {
+    console.log(auth.auths, chart.max, difference, increment, fromHeight, toHeight);
+  }
+  for (var i = 0; i < minimumTicks; i++) {
+    if (fromHeight > toHeight) {
       fromHeight -= increment;
     } else {
       fromHeight += increment;
     }
-    addInterval(chart, sparkline, fromHeight);
+    var addLabel = i == (minimumTicks - 1);
+    addInterval(chart, auth, sparkline, fromHeight, addLabel);
   }
+
 }
 
 function setUpChart(chart) {

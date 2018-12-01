@@ -33,7 +33,7 @@ var charts = [
   right: 5,
   bottom: 70,
   id: "Decline",
-  max: 10,
+  max: 5,
   },
 ];
 
@@ -156,9 +156,15 @@ function drawEvent() {
 
     if (evt.authTime != drawEvent.prevAuthTime) {
       for (var i = 0; i < charts.length; i++) {
-        var chartName = charts[i].id;
-        addLine(charts[i], (drawEvent.auths[chartName] / charts[i].max) * 100);
-        drawEvent.auths[chartName] = 0;
+        var chart = charts[i];
+        var auths = drawEvent.auths[chart.id];
+        var authTime = drawEvent.prevAuthTime;
+        var auth = { auths: auths, authTime: authTime };
+        if (auths > chart.max) {
+          console.log(auths);
+        }
+        addLine(chart, auth, (auths / chart.max) * 100);
+        drawEvent.auths[chart.id] = 0;
       }
     }
     drawEvent.prevAuthTime = evt.authTime;
