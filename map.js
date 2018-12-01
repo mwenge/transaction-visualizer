@@ -321,6 +321,7 @@ function setUpMap(map, country) {
         "position:absolute;" + 
 //        "top: " + animationStartY + "px;" +
 //        "left: " + animationStartX + "px;" +
+        "transform: translateX(-20px);" +
         "font-size: 20px;" +
       "}" +
       "to {" +
