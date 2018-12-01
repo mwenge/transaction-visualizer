@@ -76,7 +76,6 @@ function addInterval(chart, auth, sparkline, height, addLabel) {
     label.textContent = auth.authTime.substr(-8) + " (" + auth.auths + ")";
     label.style.top = "-" + (line.clientHeight - lineContainer.clientHeight) + "px";
     label.style.transform = "rotate(-45deg)";
-    console.log("placing label", auth.auths, chart.max, line.clientHeight, height, lineContainer.clientHeight);
     lineContainer.appendChild(label);
   }
 }
@@ -98,9 +97,6 @@ function addLine(chart, auth, toHeight) {
 
   var minimumTicks = 4;
   var increment = Math.max(0, difference / minimumTicks);
-  if (auth.auths > chart.max) {
-    console.log(auth.auths, chart.max, difference, increment, fromHeight, toHeight);
-  }
   for (var i = 0; i < minimumTicks; i++) {
     if (fromHeight > toHeight) {
       fromHeight -= increment;

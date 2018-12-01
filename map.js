@@ -189,9 +189,6 @@ function drawEvent() {
         var auths = drawEvent.auths[chart.id];
         var authTime = drawEvent.prevAuthTime;
         var auth = { auths: auths, authTime: authTime };
-        if (auths > chart.max) {
-          console.log(auths);
-        }
         addLine(chart, auth, (auths / chart.max) * 100);
         drawEvent.auths[chart.id] = 0;
       }
