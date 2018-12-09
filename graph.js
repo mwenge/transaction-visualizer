@@ -87,7 +87,7 @@ function addLine(chart, auth, toHeight) {
   var fromHeight = toHeight;
   if (lastLine) {
     fromHeight = lastLine.firstChild.style.height;
-    fromHeight = parseInt(fromHeight.replace(/[^\d\.\-]/g, ''), 10);
+    fromHeight = fromHeight == "" ? 0 : parseInt(fromHeight.replace(/[^\d\.\-]/g, ''), 10);
   }
 
   var difference = Math.abs(fromHeight - toHeight);
