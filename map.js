@@ -27,6 +27,21 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+var animationDuration = 5;
+document.onkeydown = checkKey;
+function checkKey(e) {
+    e = e || window.event;
+    if (e.keyCode == '38') {
+        // up arrow
+        animationDuration++;
+    } else if (e.keyCode == '40') {
+        // down arrow
+        animationDuration--;
+        animationDuration = Math.max(2, animationDuration);
+    }
+    console.log(animationDuration);
+}
+
 var colors = {}
 colors['Decline'] = { hex: '#ff0000'};
 colors['Approve'] = { hex: '#7cfc00'};
@@ -125,6 +140,7 @@ function addTownLabel(town, x, y, canvas) {
 
     var div = document.createElement('div');
     div.className = 'label town';
+    div.style.animationDuration = (animationDuration * 2) + 's';
     div.id = town;
     div.textContent = town;
     
@@ -147,6 +163,7 @@ function fadeElement(evt) {
     var element = evt.target;
     if (element.parentNode) {
         element.className = 'animation';
+        element.style.animationDuration = animationDuration + 's';
     }
     element.addEventListener("animationend", removeElement);
 }
@@ -161,8 +178,10 @@ function drawEvent() {
 
     var animation = document.createElement("div");
     animation.className = 'animation animation' + evt.country;
+    animation.style.animationDuration = animationDuration + 's';
     animation.id = evt.offset + evt.amount;
     animation.addEventListener("animationend", fadeElement);
+
 
     animation.style.fontSize = '9px';
     animation.style.color = evt.hex;
@@ -340,7 +359,7 @@ function setUpMap(map, country) {
   var style = document.createElement('style');
   var css =
     ".animation" + country + " {" +
-      "animation-duration: 3s;\n" +
+      "animation-duration: " + (animationDuration / 2) + "s;\n" +
       "animation-name: slidein" + country + ";" +
     "}\n" +
     "@keyframes slidein" + country + " {" +
