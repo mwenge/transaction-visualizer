@@ -1,8 +1,8 @@
-##Introduction and Background
+## Introduction and Background
 
 In AIB we have over two million cardholders performing hundreds, sometimes thousands of transactions per minute, both in Ireland and throughout the world. For this project I propose to create a web-based, interactive visualisation of transaction activity on a world map. This visualisation will allow the user to intuit the geographic spread of our card transactions as they happen, to forward and rewind through time and space to focus in on places and times of interest. 
 
-##Requirements Specification and Design
+## Requirements Specification and Design
 
 The high level specification for the project is as follows:
     - A set of SQL queries and Python scripts that extract and transform transaction data from the AIB data warehouse. The output will be a set of csv files that a web server can serve to the visualization and which the visualization will then process for display.
@@ -12,11 +12,17 @@ The high level specification for the project is as follows:
     - The project will be hosted on github.
 
 
-##Testing
+## Testing
 
-##Demonstration of Progress
+## Demonstration of Progress
 
-##Future Work
+The current state of the visualisation is [available here to view](https://mwenge.github.io/transaction-visualizer/).
+
+Here is an animated screenshot of it in action:
+
+![Transaction visualisation](https://github.com/mwenge/transaction-visualizer/blob/master/report-images/demo.gif "Transaction visualization in action")
+
+## Future Work
 
     - Create controls on the website that allow the user to filter the display by transaction type.
     - Create a help menu that allows the user to see the available commands for the visualization, accessible using the ‘?’ key.
