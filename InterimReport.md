@@ -1,10 +1,12 @@
 # B8IT110 - Project Interim Report
 
-## Dublin  Business  School  
-## Higher  Diploma  in  Science in Data Analytics
+College: Dublin  Business  School  
+Course: Higher  Diploma  in  Science in Data Analytics
 
 Student ID: 10391341
+
 Email: robhogan@gmail.com
+
 Supervisor: Paul Laird
 
 Submission Date: 2019-07-13
