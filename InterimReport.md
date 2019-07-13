@@ -1,3 +1,14 @@
+# B8IT110 - Project Interim Report
+
+## Dublin  Business  School  
+## Higher  Diploma  in  Science in Data Analytics
+
+Student ID: 10391341
+Email: robhogan@gmail.com
+Supervisor: Paul Laird
+
+Submission Date: 2019-07-13
+
 ## Introduction and Background
 
 In the bank I work in we have over two million cardholders performing hundreds, sometimes thousands of transactions per minute, both in Ireland and throughout the world. For this project I propose to create a web-based, interactive visualisation of transaction activity on a world map. This visualisation will allow the user to intuit the geographic spread of our card transactions as they happen, to forward and rewind through time and space to focus in on places and times of interest. 
