@@ -1,6 +1,6 @@
 ## Introduction and Background
 
-In AIB we have over two million cardholders performing hundreds, sometimes thousands of transactions per minute, both in Ireland and throughout the world. For this project I propose to create a web-based, interactive visualisation of transaction activity on a world map. This visualisation will allow the user to intuit the geographic spread of our card transactions as they happen, to forward and rewind through time and space to focus in on places and times of interest. 
+In the bank I work in we have over two million cardholders performing hundreds, sometimes thousands of transactions per minute, both in Ireland and throughout the world. For this project I propose to create a web-based, interactive visualisation of transaction activity on a world map. This visualisation will allow the user to intuit the geographic spread of our card transactions as they happen, to forward and rewind through time and space to focus in on places and times of interest. 
 
 ## Requirements Specification and Design
 
@@ -184,6 +184,7 @@ function runGeoMap() {
 ![Transaction visualisation](https://github.com/mwenge/transaction-visualizer/blob/master/report-images/countryfocus.gif "Demonstration of country/city focus")
 
 ### Graphs
+In [graph.js](https://github.com/mwenge/transaction-visualizer/blob/master/graph.js) I create a graph object for representing transaction volume. In the display I use it to show approve and decline volume. The graph keeps track of normal volume and labels any spikes in activity.
 
 ![Transaction visualisation](https://github.com/mwenge/transaction-visualizer/blob/master/report-images/graph.gif "Transaction graphs")
 
