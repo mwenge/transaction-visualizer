@@ -94,7 +94,98 @@ function runGeoMap() {
       .then(rs => processTransactionData('Geo Map', rs))
 }
 ```
+### Focusing in on countries
+Since in the real word visualization we will expect to have more data for certain countries, i.e. Ireland and the UK, I create separate 'focused' maps for Ireland and the UK. I do this, for now, by defining the countries of interest in an array of maps to paint. Since I will ultimately want to do this type of focusing for every country when the user selects a country of interest it will have to be more configurable later. As well as Ireland and the UK, I also configure a separate map for Dublin, as again most transaction traffic is ancticipated to take place here.
 
+```javascript
+var countries_for_map = [];
+countries_for_map[0] = ['IE']
+countries_for_map[1] = ['GB']
+countries_for_map[2] = ['DB']
+countries_for_map[3] = ['Default']
+
+var labels_for_map = [];
+labels_for_map['IE'] = ['Ireland']
+labels_for_map['GB'] = ['Great Britain']
+labels_for_map['DB'] = ['Dublin']
+labels_for_map['Default'] = ['']
+
+var map_for_country = [];
+map_for_country['IE'] = 0;
+map_for_country['GB'] = 1;
+map_for_country['DB'] = 2;
+map_for_country['Default'] = 3;
+
+var maps = [ 
+  {
+    left: 0,
+    top: screen.height - (screen.width / 3),
+    zindex:9,
+    width: screen.width / 3,
+    height: screen.width / 3,
+  },
+  { 
+    width: screen.width / 6,
+    height: (screen.width / 6),
+    zindex:8,
+    top: screen.height - ((screen.width / 3) + (screen.width / 6)),
+    left: 0
+  },
+  { 
+    width: screen.width / 4,
+    height: (screen.width / 4),
+    zindex:8,
+    top: screen.height - screen.width / 4,
+    left: screen.width / 3
+  },
+  { 
+    width: screen.width,
+    height: screen.height,
+    zindex: 0,
+    left: 0,
+    top: 0,
+  },
+];
+
+function paintMaps() {
+  for (const [code, coasts] of Object.entries(coastline)) {
+    var mapCode = code;
+    if (!map_for_country.hasOwnProperty(mapCode)) {
+      mapCode = "Default";
+    }
+    var canvasElement = document.getElementById(mapCode + "-layer");
+    var ctx = canvasElement.getContext('2d');
+    for (var h = 0; h < coasts.length; h++) {
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 0.3;
+      ctx.beginPath();
+
+      var coast = coasts[h];
+      var offset = mapCoordinatesToOffset(coast[1], coast[0], canvasElement, mapCode); 
+      var prevOffset = offset;
+      ctx.moveTo(offset.x, offset.y);
+
+      for (var i = 2; i < coast.length; i+=2) {
+        offset = mapCoordinatesToOffset(coast[i+1], coast[i], canvasElement, mapCode); 
+        ctx.lineTo(offset.x, offset.y);
+        prevOffset = offset;
+      }
+      ctx.stroke();
+    }
+  }
+}
+
+function runGeoMap() {
+  for (var i = 0; i < maps.length; i++) {
+    setUpMap(maps[i], countries_for_map[i]);
+  }
+
+```
+![Transaction visualisation](https://github.com/mwenge/transaction-visualizer/blob/master/report-images/countryfocus.gif "Demonstration of country/city focus")
+
+### Graphs
+
+![Transaction visualisation](https://github.com/mwenge/transaction-visualizer/blob/master/report-images/graph.gif "Transaction graphs")
 
 ## Testing
 In order to test the visualisation I generate a simulated dataset. The data is a simple CSV list of transactions that the visualization will read in and display. The records in the dataset look like this:
