@@ -303,7 +303,7 @@ for record in range(0, records):
 
 ## Demonstration of Progress
 
-The current state of the visualisation is [available here to view](https://mwenge.github.io/transaction-visualizer/).
+The current state of the visualisation is [available here to view](https://mwenge.github.io/transaction-visualizer/). Please use Chrome or a chromium-based browser to view. Firefox does not yet support all elements of the Streams API, which is used to fetch the data for display.
 
 Here is an animated screenshot of it in action:
 
